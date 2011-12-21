@@ -746,7 +746,7 @@ var CoupDBungie = {
 		Hosts:[
 			"http://coup-srv-01.comeze.com/",
 		],
-		Path:"api/",
+		Path:"API/",
 		Method:"GET",
 		Responses:{
 			OK:1,
@@ -758,7 +758,7 @@ var CoupDBungie = {
 			return new Browser.XHR(this.Method, this.Hosts[0] + this.Path + ((path) ? path : ""), true, null, onload, onerror, onreadystatechange);
 		},
 		Register:function(username, memberID, onload, onerror, onreadystatechange){
-			var path = "Register?";
+			var path = "Services/Users/Register?";
 			if(username != null){
 				path += "username=" + User.EncodeUsername(username);
 			}
@@ -770,19 +770,19 @@ var CoupDBungie = {
 			xhr.Go();
 		},
 		Report:function(username, key, subject, reason, onload, onerror, onreadystatechange){
-			var path = "Report?username=" + User.EncodeUsername(username) + "&key=" + key + "&subject=" + User.EncodeUsername(subject) + "&reason=" + encodeURIComponent(reason);
+			var path = "Services/Users/Report?username=" + User.EncodeUsername(username) + "&key=" + key + "&subject=" + User.EncodeUsername(subject) + "&reason=" + encodeURIComponent(reason);
 			var xhr = this.CreateDefaultXHR(path, onload, onerror, onreadystatechange);
 			Console.Log("Making a Report request to (" + xhr.GetURL() + ")");
 			xhr.Go();
 		},	
 		GetStyles:function(usernames, onload, onerror, onreadystatechange){
-			var path = "GetStyles?users=" + User.EncodeUsernameArray(usernames).join(",");
+			var path = "Services/Styles/GetStyles?users=" + User.EncodeUsernameArray(usernames).join(",");
 			var xhr = this.CreateDefaultXHR(path, onload, onerror, onreadystatechange);
 			Console.Log("Making a GetStyles request to (" + xhr.GetURL() + ")");
 			xhr.Go();
 		},	
 		PublishStyles:function(username, key, styles, onload, onerror, onreadystatechange){
-			var path = "PublishStyles?username=" + User.EncodeUsername(username) + "&key=" + key + styles.ToPublishString();
+			var path = "Services/Styles/PublishStyles?username=" + User.EncodeUsername(username) + "&key=" + key + styles.ToPublishString();
 			var xhr = this.CreateDefaultXHR(path, onload, onerror, onreadystatechange);
 			Console.Log("Making a PublishStyles request to (" + xhr.url + ")");
 			xhr.Go();
@@ -990,50 +990,131 @@ function Styles(){
 	}
 	this.ToPublishString = function(){
 		var str = "";
+		var to_send = "";
+		var this_default = Styles.DEFAULT_STYLE;
 		for(var s in this){
 			if(typeof this[s] !== "function"){
-				str += "&" + s + "=" + encodeURIComponent(this[s] != undefined ? this[s] : "");
+				this_default = (s in Styles.SPECIAL_DEFAULTS) ? Styles.SPECIAL_DEFAULTS[s] : Styles.DEFAULT_STYLE ;
+				to_send = this[s] != undefined ? this[s] : this_default;
+				//if (to_send == "" && !(s in Styles.ALLOW_BLANK))
+				//	to_send = this_default;
+				if (to_send == "")
+					to_send = this_default;
+				str += "&" + s + "=" + encodeURIComponent(to_send);
 			}
 		}
 		return str;
 	}
+	this.MapOldToNew = function(prop, val){ // added by DavidJCobb but IIRC I never used it
+		for(var i in Styles.MAPPINGS){
+			if(Styles.MAPPINGS[i][0].match(prop)){
+				var new_prop = prop.replace(Styles.MAPPINGS[i][0], Styles.MAPPINGS[i][1]);
+				this[new_prop] = val;
+				return true
+			}
+		}
+		return false
+	}
+        this.SetStyleValue = function(prop, val){ // added by DavidJCobb but IIRC I never used it
+		if (!this.MapOldToNew(prop, val))
+			this[prop] = val
+	}
 	
 	this.TitlebarUsernameText = undefined;
 	this.TitlebarUsernameTextColor = undefined;
+	this.TitlebarUsernameTextOpacity = undefined;
+
 	this.TitlebarTitleText = undefined;
 	this.TitlebarTitleTextColor = undefined;
+	this.TitlebarTitleTextOpacity = undefined;
+
 	this.TitlebarMessageText = undefined;
 	this.TitlebarMessageTextColor = undefined;
+	this.TitlebarMessageTextOpacity = undefined;
+
 	this.TitlebarGroupText = undefined;
 	this.TitlebarGroupTextColor = undefined;
+	this.TitlebarGroupTextOpacity = undefined;
+
 	this.TitlebarBackgroundImage = undefined;
 	this.TitlebarBackgroundOpacity = undefined;
 	this.TitlebarBackgroundColor = undefined;
 	this.TitlebarBackgroundGradientLeft = undefined;
 	this.TitlebarBackgroundGradientRight = undefined;
+
 	this.TitlebarBorderStyle = undefined;
 	this.TitlebarBorderColor = undefined;
+
+	this.TitlebarMoreOpacity = undefined;
 
 	this.AvatarImage = undefined;
 	this.AvatarOpacity = undefined;
 	this.AvatarBorderStyle = undefined;
 	this.AvatarBorderColor = undefined;
 
-	this.PostBackgroundOpacity = undefined;
-	this.PostBackgroundImage = undefined;
-	this.PostBackgroundImageRepeat = undefined;
-	this.PostBackgroundImageAttachment = undefined;
-	this.PostBackgroundImagePosition = undefined;
 	this.PostBackgroundColor = undefined;
 	this.PostBackgroundGradientLeft = undefined;
 	this.PostBackgroundGradientRight = undefined;
+
+	this.PostBackground1Image = undefined;
+	this.PostBacground1ImageOpacity = undefined;	// to account for a server-side typo
+	this.PostBackground1ImageOpacity = undefined;
+	this.PostBackground1ImageRepeat = undefined;
+	this.PostBackground1ImageAttachment = undefined;
+	this.PostBackground1ImagePosition = undefined;
+
+	this.PostBackground2Image = undefined;
+	this.PostBackground2ImageOpacity = undefined;
+	this.PostBackground2ImageRepeat = undefined;
+	this.PostBackground2ImageAttachment = undefined;
+	this.PostBackground2ImagePosition = undefined;
+
+	this.PostBackground3Image = undefined;
+	this.PostBackground3ImageOpacity = undefined;
+	this.PostBackground3ImageRepeat = undefined;
+	this.PostBackground3ImageAttachment = undefined;
+	this.PostBackground3ImagePosition = undefined;
+
 	this.PostFont = undefined;
 	this.PostFontColor = undefined;
+	this.PostFontOpacity = undefined;
+
 	this.PostLinkColor = undefined;
+	this.PostLinkOpacity = undefined;
+
+	this.QuoteBorderColor = undefined;
+	this.QuoteFontColor = undefined;
+	this.QuoteBackgroundColor = undefined;
 	
 }
 Styles.DEFAULT_STYLE = "*";
-
+Styles.MAPPINGS =
+   {
+      "single background to multi background": [ /^PostBackground([a-zA-Z]*)$/ , "PostBackground1$1" ],
+      "background opacity to background-image opacity": [ /^PostBackground(\d+)Opacity$/ , "PostBackground$1ImageOpacity" ]
+   };
+Styles.ALLOW_BLANK =
+	{
+		"TitlebarUsernameText": 1,
+		"TitlebarTitleText": 1,
+		"TitlebarMessageText": 1,
+		"TitlebarGroupText": 1
+	};
+Styles.SPECIAL_DEFAULTS =
+	{
+		"TitlebarUsernameTextOpacity": 1,
+		"TitlebarTitleTextOpacity": 1,
+		"TitlebarMessageTextOpacity": 1,
+		"TitlebarGroupTextOpacity": 1,
+		"TitlebarBackgroundOpacity": 1,
+		"TitlebarMoreOpacity": 1,
+		"PostBacground1ImageOpacity": 1,	// to account for a server-side typo
+		"PostBackground1ImageOpacity": 1,
+		"PostBackground2ImageOpacity": 1,
+		"PostBackground3ImageOpacity": 1,
+		"PostFontOpacity": 1,
+		"PostLinkOpacity": 1
+	};
 
 //Client: Good (28th June, 2011)
 var Client = {
@@ -1094,19 +1175,30 @@ var MainFunctions = {
 		delete(temp);
 		var checked = 'checked="checked"';
 		
-		if(Options.Get('coup5ignorelist', usernameElem.text(), 'PostBackgroundOpacity', undefined) != undefined) {
-			styles['PostBackgroundOpacity'] = Options.Get('coup5ignorelist', usernameElem.text(), 'PostBackgroundOpacity', 1.0);
-		}
-		styles['PostBackgroundOpacity'] = parseFloat(styles.PostBackgroundOpacity) < Options.Get('coup5options', 'text', 'PostBackgroundOpacity', 1.0) ? styles.PostBackgroundOpacity : Options.Get('coup5options', 'text', 'PostBackgroundOpacity', 1.0);
-		if(Options.Get('coup5ignorelist', usernameElem.text(), 'TitlebarBackgroundOpacity', undefined) != undefined) {
-			styles['TitlebarBackgroundOpacity'] = Options.Get('coup5ignorelist', usernameElem.text(), 'TitlebarBackgroundOpacity', 1.0);
-		}
-		styles['TitlebarBackgroundOpacity'] = parseFloat(styles.TitlebarBackgroundOpacity) < Options.Get('coup5options', 'text', 'TitlebarBackgroundOpacity', 1.0) ? styles.TitlebarBackgroundOpacity : Options.Get('coup5options', 'text', 'TitlebarBackgroundOpacity', 1.0);
-		if(Options.Get('coup5ignorelist', usernameElem.text(), 'AvatarOpacity', undefined) != undefined) {
-			styles['AvatarOpacity'] = Options.Get('coup5ignorelist', usernameElem.text(), 'AvatarOpacity', 1.0);
-		}
-		styles['AvatarOpacity'] = parseFloat(styles.AvatarOpacity) < Options.Get('coup5options', 'text', 'AvatarOpacity', 1.0) ? styles.AvatarOpacity : Options.Get('coup5options', 'text', 'AvatarOpacity', 1.0);
-		
+		var NotDefault = function(a) { return a && a != Styles.DEFAULT_STYLE };
+		var ShouldDo = function(a) { return NotDefault(styles[a]) && ocheckbox[a] != checked && ignoreValueExists(a) };
+
+		var NormalizeOpacity =
+			function(prop, multi_prop) {
+				if(Options.Get('coup5ignorelist', usernameElem.text(), (multi_prop || prop), undefined) != undefined) {
+					styles[prop] = Options.Get('coup5ignorelist', usernameElem.text(), (multi_prop || prop), 1.0);
+				}
+				styles[prop] = Math.min( parseFloat(styles[prop]), Options.Get('coup5options', 'text', (multi_prop || prop), 1.0) );
+			};
+
+		NormalizeOpacity("TitlebarUsernameTextOpacity");
+		NormalizeOpacity("TitlebarTitleTextOpacity");
+		NormalizeOpacity("TitlebarMessageTextOpacity");
+		NormalizeOpacity("TitlebarGroupTextOpacity");
+		NormalizeOpacity("TitlebarBackgroundOpacity");
+		NormalizeOpacity("TitlebarMoreOpacity");
+		NormalizeOpacity("AvatarOpacity");
+		NormalizeOpacity("PostBackground1ImageOpacity", "PostBackgroundOpacity");
+		NormalizeOpacity("PostBackground2ImageOpacity", "PostBackgroundOpacity");
+		NormalizeOpacity("PostBackground3ImageOpacity", "PostBackgroundOpacity");
+		NormalizeOpacity("PostFontOpacity");
+		NormalizeOpacity("PostLinkOpacity");
+				
 		function ignoreValueExists(o){
 			if(icheckbox[o] != undefined){
 				return icheckbox[o];
@@ -1124,69 +1216,83 @@ var MainFunctions = {
 		var titlebar = $(element).find("ul.author_header_block").prev();
 		
 		//Set titlebar
-		if(styles.TitlebarBackgroundColor != Styles.DEFAULT_STYLE && ocheckbox['TitlebarBackgroundColor'] != checked && ignoreValueExists('TitlebarBackgroundColor')){
+		if (ShouldDo("TitlebarBackgroundColor")) {
 			rgb = styles.TitlebarBackgroundColor.ToHex().ToRGB();
 			$(titlebar).css("background-color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.TitlebarBackgroundOpacity + ")");
 		} else {
 			$(titlebar).css('background-color', defaultTitlebarColor);
 		}
-		if(styles.TitlebarBackgroundGradientLeft != Styles.DEFAULT_STYLE && styles.TitlebarBackgroundGradientRight != Styles.DEFAULT_STYLE && ocheckbox['TitlebarBackgroundGradientLeft'] != checked && ocheckbox['TitlebarBackgroundGradientRight'] != checked && ignoreValueExists('TitlebarBackgroundGradientLeft') && ignoreValueExists('TitlebarBackgroundGradientRight')){
+		if(ShouldDo("TitlebarBackgroundGradientLeft") && ShouldDo("TitlebarBackgroundGradientRight")){
 			rgb = styles.TitlebarBackgroundGradientLeft.ToHex().ToRGB();
 			rgb2 = styles.TitlebarBackgroundGradientRight.ToHex().ToRGB();
 			$(titlebar).css("background-image", "-moz-linear-gradient(left, rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.TitlebarBackgroundOpacity + "), rgba(" + rgb2.R + "," + rgb2.G + "," + rgb2.B + "," + styles.TitlebarBackgroundOpacity + "))");
 		}
-		if(styles.TitlebarBackgroundImage != Styles.DEFAULT_STYLE && ocheckbox['TitlebarBackgroundImage'] != checked && ignoreValueExists('TitlebarBackgroundImage')){
+		if(ShouldDo("TitlebarBackgroundImage")){
 			$(titlebar).css("background-image", "url(\"" + styles.TitlebarBackgroundImage.HTMLEncode() + "\")");
 			$(titlebar).css("opacity", styles.TitlebarBackgroundOpacity);
 		}
-		if(styles.TitlebarBorderColor != Styles.DEFAULT_STYLE && styles.TitlebarBorderStyle != Styles.DEFAULT_STYLE && ocheckbox['TitlebarBorder'] != checked && ignoreValueExists('TitlebarBorder')){
+		if(ShouldDo("TitlebarBorderColor") && ShouldDo("TitlebarBorderStyle") && ocheckbox['TitlebarBorder'] != checked && ignoreValueExists('TitlebarBorder')){
 			$(titlebar).css("border", "1px solid #" + styles.TitlebarBorderColor.HTMLEncode());
 			$(titlebar).css("border-style", styles.TitlebarBorderStyle.HTMLEncode());
 		}
+
+		var moreElem = $(element).find("ul.author_header_block li.author_header_links:contains('more')");
+		moreElem.css("opacity", styles.TitlebarMoreOpacity);
 		
 		var groupElem = $(element).find("ul.author_header_block li.author_header_links > a:contains('groups')");
-		if(styles.TitlebarGroupText != Styles.DEFAULT_STYLE && ocheckbox['TitlebarGroupText'] != checked && ignoreValueExists('TitlebarGroupText')){
+		groupElem.css("opacity", styles.TitlebarGroupTextOpacity);
+		if(ShouldDo("TitlebarGroupText")){
 			groupElem.text(styles.TitlebarGroupText);
 		}
-		if(styles.TitlebarGroupTextColor != Styles.DEFAULT_STYLE && ocheckbox['TitlebarGroupTextColor'] != checked && ignoreValueExists('TitlebarGroupTextColor')){
+		if(ShouldDo("TitlebarGroupTextColor")){
 			groupElem.css("color", "#" + styles.TitlebarGroupTextColor.HTMLEncode());
 		}			
 		var msgElem = $(element).find("ul.author_header_block li.author_header_links > a:contains('message user')");
-		if(styles.TitlebarMessageText != Styles.DEFAULT_STYLE && ocheckbox['TitlebarMessageText'] != checked && ignoreValueExists('TitlebarMessageText')){
+		msgElem.css("opacity", styles.TitlebarMessageTextOpacity);
+		if(ShouldDo("TitlebarMessageText")){
 			msgElem.text(styles.TitlebarMessageText);
 		}
-		if(styles.TitlebarMessageTextColor != Styles.DEFAULT_STYLE && ocheckbox['TitlebarMessageTextColor'] != checked && ignoreValueExists('TitlebarMessageTextColor')){
+		if(ShouldDo("TitlebarMessageTextColor")){
 			msgElem.css("color", "#" + styles.TitlebarMessageTextColor.HTMLEncode());
 		}
 		var titleElem = $(element).find("ul.author_header_block li.title");
-		if(styles.TitlebarTitleText != Styles.DEFAULT_STYLE && ocheckbox['TitlebarTitleText'] != checked && ignoreValueExists('TitlebarTitleText')){
+		titleElem.css("opacity", styles.TitlebarTitleTextOpacity);
+		if(ShouldDo("TitlebarTitleText")){
 			titleElem.text(styles.TitlebarTitleText);
 		}
-		if(styles.TitlebarTitleTextColor != Styles.DEFAULT_STYLE && ocheckbox['TitlebarTitleTextColor'] != checked && ignoreValueExists('TitlebarTitleTextColor')){
+		if(ShouldDo("TitlebarTitleTextColor")){
 			titleElem.css("color", "#" + styles.TitlebarTitleTextColor.HTMLEncode());
 		}
 		$(element).find("div.forumavatar img, ul.author_header_block li.login > a").attr('title', usernameElem.text());
-		if(styles.TitlebarUsernameText != Styles.DEFAULT_STYLE && ocheckbox['TitlebarUsernameText'] != checked && ignoreValueExists('TitlebarUsernameText')){
+		usernameElem.css("opacity", styles.TitlebarUsernameTextOpacity);
+		if(ShouldDo("TitlebarUsernameText")){
 			usernameElem.text(styles.TitlebarUsernameText);
 		}
-		if(styles.TitlebarUsernameTextColor != Styles.DEFAULT_STYLE && ocheckbox['TitlebarUsernameTextColor'] != checked && ignoreValueExists('TitlebarUsernameTextColor')){
+		if(ShouldDo("TitlebarUsernameTextColor")){
 			usernameElem.css("color", "#" + styles.TitlebarUsernameTextColor.HTMLEncode());
 		}
 		
 		//Set avatar
 		$(element).find("div.forumavatar img").css("opacity", styles.AvatarOpacity);
-		if(styles.AvatarImage != Styles.DEFAULT_STYLE && ocheckbox['AvatarImage'] != checked && ignoreValueExists('AvatarImage')){
+		if(ShouldDo("AvatarImage")){
 			$(element).find("div.forumavatar img").attr("src", styles.AvatarImage.HTMLEncode());
 		}
-		if(styles.AvatarBorderStyle != Styles.DEFAULT_STYLE && styles.AvatarBorderColor != Styles.DEFAULT_STYLE && ocheckbox['AvatarBorderStyle'] != checked && ocheckbox['AvatarBorderColor'] != checked && ignoreValueExists('AvatarBorderStyle') && ignoreValueExists('AvatarBorderColor')){
+		if(ShouldDo("AvatarBorderStyle") && ShouldDo("AvatarBorderColor")){
 			$(element).find("div.forumavatar img").css({width:"88px", height:"88px"}); //MUST be set if border style is set (screws up layout if not)
 			$(element).find("div.forumavatar img").css("border", "1px " + styles.AvatarBorderStyle.HTMLEncode() + " #" + styles.AvatarBorderColor.HTMLEncode()); 
 		}
 		
 		//Set post
 		$(element).css({backgroundColor:"transparent", position:"relative"});
-		$(element).parent().createPrepend("div", {style:{opacity:styles.PostBackgroundOpacity, position:"absolute", top:0, left:0, width:"670px", height:"100%"}});
+		var bg_div_options = {style:{opacity:styles.PostBackgroundOpacity, position:"absolute", top:0, left:0, width:"670px", height:"100%"}};
+		$(element).parent().createPrepend("div", $.extend({class:"coup-5-background-1"},bg_div_options));
+		if (ShouldDo("PostBackground2Image"))
+			$(element).parent().createPrepend("div", $.extend({class:"coup-5-background-2"},bg_div_options));
+		if (ShouldDo("PostBackground3Image"))
+			$(element).parent().createPrepend("div", $.extend({class:"coup-5-background-3"},bg_div_options));
 		var postBg = $(element).parent().find("div:first");
+		var postBg2 = $(element).parent().find("div.coup-5-background-2");
+		var postBg3 = $(element).parent().find("div.coup-5-background-3");
 		try {
 			if(preview_) {
 				temp = $("<span></span>");
@@ -1194,31 +1300,54 @@ var MainFunctions = {
 			}
 		} catch(e) {}
 		
-		if(styles.PostBackgroundColor != Styles.DEFAULT_STYLE && ocheckbox['PostBackgroundColor'] != checked && ignoreValueExists('PostBackgroundColor')){
+		if(ShouldDo("PostBackgroundColor")){
 			rgb = styles.PostBackgroundColor.ToHex().ToRGB();
 			$(postBg).css("background-color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.PostBackgroundOpacity + ")"); 
 		}
 		
-		if(styles.PostBackgroundGradientLeft != Styles.DEFAULT_STYLE && styles.PostBackgroundGradientRight != Styles.DEFAULT_STYLE && ocheckbox['PostBackgroundGradientLeft'] != checked && ocheckbox['PostBackgroundGradientRight'] != checked && ignoreValueExists('PostBackgroundGradientLeft') && ignoreValueExists('PostBackgroundGradientRight')){
+		if(ShouldDo("PostBackgroundGradientLeft") && ShouldDo("PostBackgroundGradientRight")){
 			rgb = styles.PostBackgroundGradientLeft.ToHex().ToRGB();
 			rgb2 = styles.PostBackgroundGradientRight.ToHex().ToRGB();
-			$(postBg).css("background-image", "-moz-linear-gradient(left, rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.PostBackgroundOpacity + "), rgba(" + rgb2.R + "," + rgb2.G + "," + rgb2.B + "," + styles.PostBackgroundOpacity + "))");
+			//$(postBg).css("background-image", "-moz-linear-gradient(left, rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.PostBackground1ImageOpacity + "), rgba(" + rgb2.R + "," + rgb2.G + "," + rgb2.B + "," + styles.PostBackground1ImageOpacity + "))");
+			$(postBg).css("background-image", "-moz-linear-gradient(left, rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + ",1.0), rgba(" + rgb2.R + "," + rgb2.G + "," + rgb2.B + ",1.0))");
+			$(postBg).css("opacity", styles.PostBackground1ImageOpacity);
 		}
-		if(styles.PostBackgroundImage != Styles.DEFAULT_STYLE && ocheckbox['PostBackgroundImage'] != checked && ignoreValueExists('PostBackgroundImage')){
-			$(postBg).css("background-repeat", styles.PostBackgroundImageRepeat != Styles.DEFAULT_STYLE ? styles.PostBackgroundImageRepeat : "repeat");
-			$(postBg).css("background-position", styles.PostBackgroundImagePosition != Styles.DEFAULT_STYLE ? styles.PostBackgroundImagePosition : "0% 0%");
-			$(postBg).css("background-attachment", styles.PostBackgroundImageAttachment != Styles.DEFAULT_STYLE ? styles.PostBackgroundImageAttachment : "scroll");
-			$(postBg).css("background-image", "url(\"" + styles.PostBackgroundImage.HTMLEncode() + "\")");
+		if(ShouldDo("PostBackground1Image")){
+			$(postBg).css("opacity", styles.PostBackground1ImageOpacity);
+			$(postBg).css("background-repeat", styles.PostBackground1ImageRepeat != Styles.DEFAULT_STYLE ? styles.PostBackground1ImageRepeat : "repeat");
+			$(postBg).css("background-position", styles.PostBackground1ImagePosition != Styles.DEFAULT_STYLE ? styles.PostBackground1ImagePosition : "0% 0%");
+			$(postBg).css("background-attachment", styles.PostBackground1ImageAttachment != Styles.DEFAULT_STYLE ? styles.PostBackground1ImageAttachment : "scroll");
+			$(postBg).css("background-image", "url(\"" + styles.PostBackground1Image.HTMLEncode() + "\")");
+		}
+		if(postBg2.length){
+			$(postBg2).css("opacity", styles.PostBackground2ImageOpacity);
+			$(postBg2).css("background-repeat", styles.PostBackground2ImageRepeat != Styles.DEFAULT_STYLE ? styles.PostBackground2ImageRepeat : "repeat");
+			$(postBg2).css("background-position", styles.PostBackground2ImagePosition != Styles.DEFAULT_STYLE ? styles.PostBackground2ImagePosition : "0% 0%");
+			$(postBg2).css("background-attachment", styles.PostBackground2ImageAttachment != Styles.DEFAULT_STYLE ? styles.PostBackground2ImageAttachment : "scroll");
+			$(postBg2).css("background-image", "url(\"" + styles.PostBackground2Image.HTMLEncode() + "\")");
+		}
+		if(postBg3.length){
+			$(postBg3).css("opacity", styles.PostBackground3ImageOpacity);
+			$(postBg3).css("background-repeat", styles.PostBackground3ImageRepeat != Styles.DEFAULT_STYLE ? styles.PostBackground3ImageRepeat : "repeat");
+			$(postBg3).css("background-position", styles.PostBackground3ImagePosition != Styles.DEFAULT_STYLE ? styles.PostBackground3ImagePosition : "0% 0%");
+			$(postBg3).css("background-attachment", styles.PostBackground3ImageAttachment != Styles.DEFAULT_STYLE ? styles.PostBackground3ImageAttachment : "scroll");
+			$(postBg3).css("background-image", "url(\"" + styles.PostBackground3Image.HTMLEncode() + "\")");
 		}		
 		
-		if(styles.PostFont != Styles.DEFAULT_STYLE && ocheckbox['PostFont'] != checked && ignoreValueExists('PostFont')){
+		if(ShouldDo("PostFont")){
 			$(element).find("div.postbody > p").css("font-family", styles.PostFont.HTMLEncode());
 		}
-		if(styles.PostFontColor != Styles.DEFAULT_STYLE && ocheckbox['PostFontColor'] != checked && ignoreValueExists('PostFontColor')){
+		if(ShouldDo("PostFontColor")){
 			$(element).find("div.postbody > p").css("color", "#" + styles.PostFontColor.HTMLEncode());
 		}
-		if(styles.PostLinkColor != Styles.DEFAULT_STYLE && ocheckbox['PostLinkColor'] != checked && ignoreValueExists('PostLinkColor')){
+		if(ShouldDo("PostFontOpacity")){
+			$(element).find("div.postbody > p").css("opacity", styles.PostFontOpacity);
+		}
+		if(ShouldDo("PostLinkColor")){
 			$(element).find("div.postbody > p a").css("color", "#" + styles.PostLinkColor.HTMLEncode());
+		}
+		if(ShouldDo("PostLinkOpacity")){
+			$(element).find("div.postbody > p a").css("opacity", styles.PostLinkOpacity);
 		}
 		try {
 			if(preview_) {
@@ -1525,6 +1654,13 @@ var MainFunctions = {
 									],
 									
 									"tr", null, [
+										"td", null, "TitlebarUsernameTextOpacity: ",
+										"td", null, [
+											"input", {id:"TitlebarUsernameTextOpacity"}, null
+										]
+									],
+									
+									"tr", null, [
 										"td", null, "TitlebarTitleText: ",
 										"td", null, [
 											"input", {id:"TitlebarTitleText"}, null
@@ -1535,6 +1671,13 @@ var MainFunctions = {
 										"td", null, "TitlebarTitleTextColor: ",
 										"td", null, [
 											"input", {id:"TitlebarTitleTextColor", className:"Coup5ColorWheel"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "TitlebarTitleTextOpacity: ",
+										"td", null, [
+											"input", {id:"TitlebarTitleTextOpacity"}, null
 										]
 									],
 									
@@ -1553,6 +1696,13 @@ var MainFunctions = {
 									],
 									
 									"tr", null, [
+										"td", null, "TitlebarMessageTextOpacity: ",
+										"td", null, [
+											"input", {id:"TitlebarMessageTextOpacity"}, null
+										]
+									],
+									
+									"tr", null, [
 										"td", null, "TitlebarGroupText: ",
 										"td", null, [
 											"input", {id:"TitlebarGroupText"}, null
@@ -1563,6 +1713,13 @@ var MainFunctions = {
 										"td", null, "TitlebarGroupTextColor: ",
 										"td", null, [
 											"input", {id:"TitlebarGroupTextColor", className:"Coup5ColorWheel"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "TitlebarGroupTextOpacity: ",
+										"td", null, [
+											"input", {id:"TitlebarGroupTextOpacity"}, null
 										]
 									],
 									
@@ -1616,6 +1773,13 @@ var MainFunctions = {
 									],
 									
 									"tr", null, [
+										"td", null, "TitlebarMoreOpacity: ",
+										"td", null, [
+											"input", {id:"TitlebarMoreOpacity"}, null
+										]
+									],
+									
+									"tr", null, [
 										"td", {colspan:"2"}, [
 											"hr", null
 										]
@@ -1656,41 +1820,6 @@ var MainFunctions = {
 									],
 									
 									"tr", null, [
-										"td", null, "PostBackgroundOpacity: ",
-										"td", null, [
-											"input", {id:"PostBackgroundOpacity"}, null
-										]
-									],
-									
-									"tr", null, [
-										"td", null, "PostBackgroundImage: ",
-										"td", null, [
-											"input", {id:"PostBackgroundImage"}, null
-										]
-									],
-									
-									"tr", null, [
-										"td", null, "PostBackgroundImageRepeat: ",
-										"td", null, [
-											"input", {id:"PostBackgroundImageRepeat"}, null
-										]
-									],
-									
-									"tr", null, [
-										"td", null, "PostBackgroundImageAttachment: ",
-										"td", null, [
-											"input", {id:"PostBackgroundImageAttachment"}, null
-										]
-									],
-									
-									"tr", null, [
-										"td", null, "PostBackgroundImagePosition: ",
-										"td", null, [
-											"input", {id:"PostBackgroundImagePosition"}, null
-										]
-									],
-									
-									"tr", null, [
 										"td", null, "PostBackgroundColor: ",
 										"td", null, [
 											"input", {id:"PostBackgroundColor", className:"Coup5ColorWheel"}, null
@@ -1712,6 +1841,111 @@ var MainFunctions = {
 									],
 									
 									"tr", null, [
+										"td", null, "PostBackgroundImage: ",
+										"td", null, [
+											"input", {id:"PostBackgroundImage"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackgroundImageOpacity: ",
+										"td", null, [
+											"input", {id:"PostBackgroundOpacity"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackgroundImagePosition: ",
+										"td", null, [
+											"input", {id:"PostBackgroundImagePosition"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackgroundImageAttachment: ",
+										"td", null, [
+											"input", {id:"PostBackgroundImageAttachment"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackgroundImageRepeat: ",
+										"td", null, [
+											"input", {id:"PostBackgroundImageRepeat"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackground2Image: ",
+										"td", null, [
+											"input", {id:"PostBackground2Image"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackground2ImageOpacity: ",
+										"td", null, [
+											"input", {id:"PostBackground2Opacity"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackground2ImagePosition: ",
+										"td", null, [
+											"input", {id:"PostBackground2ImagePosition"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackground2ImageAttachment: ",
+										"td", null, [
+											"input", {id:"PostBackground2ImageAttachment"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackground2ImageRepeat: ",
+										"td", null, [
+											"input", {id:"PostBackground2ImageRepeat"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackground3Image: ",
+										"td", null, [
+											"input", {id:"PostBackground3Image"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackground3ImageOpacity: ",
+										"td", null, [
+											"input", {id:"PostBackground3Opacity"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackground3ImagePosition: ",
+										"td", null, [
+											"input", {id:"PostBackground3ImagePosition"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackground3ImageAttachment: ",
+										"td", null, [
+											"input", {id:"PostBackground3ImageAttachment"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostBackground3ImageRepeat: ",
+										"td", null, [
+											"input", {id:"PostBackground3ImageRepeat"}, null
+										]
+									],
+									
+									"tr", null, [
 										"td", null, "PostFont: ",
 										"td", null, [
 											"input", {id:"PostFont"}, null
@@ -1726,9 +1960,50 @@ var MainFunctions = {
 									],
 									
 									"tr", null, [
+										"td", null, "PostFontOpacity: ",
+										"td", null, [
+											"input", {id:"PostFontOpacity"}, null
+										]
+									],
+									
+									"tr", null, [
 										"td", null, "PostLinkColor: ",
 										"td", null, [
 											"input", {id:"PostLinkColor", className:"Coup5ColorWheel"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "PostLinkOpacity: ",
+										"td", null, [
+											"input", {id:"PostLinkOpacity"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", {colspan:"2"}, [
+											"hr", null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "QuoteBorderColor: ",
+										"td", null, [
+											"input", {id:"QuoteBorderColor", className:"Coup5ColorWheel"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "QuoteFontColor: ",
+										"td", null, [
+											"input", {id:"QuoteFontColor", className:"Coup5ColorWheel"}, null
+										]
+									],
+									
+									"tr", null, [
+										"td", null, "QuoteBackgroundColor: ",
+										"td", null, [
+											"input", {id:"QuoteBackgroundColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
@@ -1749,37 +2024,59 @@ var MainFunctions = {
 													var s = new Styles();
 													
 													s.TitlebarUsernameText = $("#TitlebarUsernameText").val();
-													s.TitlebarUsernameTextColor = $("#TitlebarUsernameTextColor").val();
+													s.TitlebarUsernameTextColor = $("#TitlebarUsernameTextColor").val().toLowerCase();
+													s.TitlebarUsernameTextOpacity = $("#TitlebarUsernameTextOpacity").val();
 													s.TitlebarTitleText = $("#TitlebarTitleText").val();
-													s.TitlebarTitleTextColor = $("#TitlebarTitleTextColor").val();
+													s.TitlebarTitleTextColor = $("#TitlebarTitleTextColor").val().toLowerCase();
+													s.TitlebarTitleTextOpacity = $("#TitlebarTitleTextOpacity").val();
 													s.TitlebarMessageText = $("#TitlebarMessageText").val();
-													s.TitlebarMessageTextColor = $("#TitlebarMessageTextColor").val();
+													s.TitlebarMessageTextColor = $("#TitlebarMessageTextColor").val().toLowerCase();
+													s.TitlebarMessageTextOpacity = $("#TitlebarMessageTextOpacity").val();
 													s.TitlebarGroupText = $("#TitlebarGroupText").val();
-													s.TitlebarGroupTextColor = $("#TitlebarGroupTextColor").val();
+													s.TitlebarGroupTextColor = $("#TitlebarGroupTextColor").val().toLowerCase();
+													s.TitlebarGroupTextOpacity = $("#TitlebarGroupTextOpacity").val();
 													s.TitlebarBackgroundImage = $("#TitlebarBackgroundImage").val();
 													s.TitlebarBackgroundOpacity = $("#TitlebarBackgroundOpacity").val();
-													s.TitlebarBackgroundColor = $("#TitlebarBackgroundColor").val();
+													s.TitlebarBackgroundColor = $("#TitlebarBackgroundColor").val().toLowerCase();
 													s.TitlebarBackgroundGradientLeft = $("#TitlebarBackgroundGradientLeft").val();
 													s.TitlebarBackgroundGradientRight = $("#TitlebarBackgroundGradientRight").val();
 													s.TitlebarBorderStyle = $("#TitlebarBorderStyle").val();
-													s.TitlebarBorderColor = $("#TitlebarBorderColor").val();
+													s.TitlebarBorderColor = $("#TitlebarBorderColor").val().toLowerCase();
+													s.TitlebarMoreOpacity = $("#TitlebarMoreOpacity").val();
 													
 													s.AvatarImage = $("#AvatarImage").val();
 													s.AvatarOpacity = $("#AvatarOpacity").val();
 													s.AvatarBorderStyle = $("#AvatarBorderStyle").val();
-													s.AvatarBorderColor = $("#AvatarBorderColor").val();
+													s.AvatarBorderColor = $("#AvatarBorderColor").val().toLowerCase();
 													
-													s.PostBackgroundOpacity = $("#PostBackgroundOpacity").val();
-													s.PostBackgroundImage = $("#PostBackgroundImage").val();
-													s.PostBackgroundImageRepeat = $("#PostBackgroundImageRepeat").val();
-													s.PostBackgroundImageAttachment = $("#PostBackgroundImageAttachment").val();
-													s.PostBackgroundImagePosition = $("#PostBackgroundImagePosition").val();
-													s.PostBackgroundColor = $("#PostBackgroundColor").val();
+													s.PostBackground1Image = $("#PostBackgroundImage").val();
+													s.PostBackground1ImageOpacity = $("#PostBackgroundOpacity").val();
+													s.PostBacground1ImageOpacity = $("#PostBackgroundOpacity").val();	// I think there's a typo in the server-side code
+													s.PostBackground1ImagePosition = $("#PostBackgroundImagePosition").val();
+													s.PostBackground1ImageAttachment = $("#PostBackgroundImageAttachment").val();
+													s.PostBackground1ImageRepeat = $("#PostBackgroundImageRepeat").val();
+													s.PostBackground2Image = $("#PostBackground2Image").val();
+													s.PostBackground2ImageOpacity = $("#PostBackground2Opacity").val();
+													s.PostBackground2ImagePosition = $("#PostBackground2ImagePosition").val();
+													s.PostBackground2ImageAttachment = $("#PostBackground2ImageAttachment").val();
+													s.PostBackground2ImageRepeat = $("#PostBackground2ImageRepeat").val();
+													s.PostBackground3Image = $("#PostBackground3Image").val();
+													s.PostBackground3ImageOpacity = $("#PostBackground3Opacity").val();
+													s.PostBackground3ImagePosition = $("#PostBackground3ImagePosition").val();
+													s.PostBackground3ImageAttachment = $("#PostBackground3ImageAttachment").val();
+													s.PostBackground3ImageRepeat = $("#PostBackground3ImageRepeat").val();
+													s.PostBackgroundColor = $("#PostBackgroundColor").val().toLowerCase();
 													s.PostBackgroundGradientLeft = $("#PostBackgroundGradientLeft").val();
 													s.PostBackgroundGradientRight = $("#PostBackgroundGradientRight").val();
 													s.PostFont = $("#PostFont").val();
-													s.PostFontColor = $("#PostFontColor").val();
-													s.PostLinkColor = $("#PostLinkColor").val();
+													s.PostFontColor = $("#PostFontColor").val().toLowerCase();
+													s.PostFontOpacity = $("#PostFontOpacity").val();
+													s.PostLinkColor = $("#PostLinkColor").val().toLowerCase();
+													s.PostLinkOpacity = $("#PostLinkOpacity").val();
+
+													s.QuoteBorderColor = $("#QuoteBorderColor").val().toLowerCase();
+													s.QuoteFontColor = $("#QuoteFontColor").val().toLowerCase();
+													s.QuoteBackgroundColor = $("#QuoteBackgroundColor").val().toLowerCase();
 													
 													CoupDBungie.Server.PublishStyles(Client.GetUsername(""), Client.GetKey(""), s,
 														function(){
@@ -2289,7 +2586,7 @@ var MainFunctions = {
 		//End Ban history parsing
 		
 		//Options global declarations checkbox event
-		$(".coup5optionsglobdec input[type='checkbox']").live('click', function(){
+		$(".coup5optionsglobdec + table input[type='checkbox']").live('click', function(){
 			if($(this).is(':checked')){
 				Options.Add('coup5options', 'checkbox', $(this).attr('name'), 'checked="checked"');
 			}
