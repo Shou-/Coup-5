@@ -22,7 +22,11 @@
 var Console = {
 	Log:function(a){
 		if(CoupDBungie.Debug){
-			GM_log(a);
+			try{
+				GM_log(a);
+			} catch(e) {
+				console.log(a);
+			}
 		}
 	}
 }
@@ -1339,10 +1343,8 @@ var MainFunctions = {
 		$(element).css({backgroundColor:"transparent", position:"relative"});
 		var bg_div_options = {style:{opacity:"", position:"absolute", top:0, left:0, width:"670px", height:"100%"}};
 		$(element).parent().createPrepend("div", $.extend({class:"coup-5-background-1"},bg_div_options));
-		if (ShouldDo("PostBackground2Image"))
-			$(element).parent().createPrepend("div", $.extend({class:"coup-5-background-2"},bg_div_options));
-		if (ShouldDo("PostBackground3Image"))
-			$(element).parent().createPrepend("div", $.extend({class:"coup-5-background-3"},bg_div_options));
+		$(element).parent().createPrepend("div", $.extend(bg_div_options, {class:"coup-5-background-2", opacity:styles.PostBackground2ImageOpacity}));
+		$(element).parent().createPrepend("div", $.extend(bg_div_options, {class:"coup-5-background-3", opacity:styles.PostBackground1ImageOpacity}));
 		var postBg = $(element).parent().find("div.coup-5-background-1");
 		var postBg2 = $(element).parent().find("div.coup-5-background-2");
 		var postBg3 = $(element).parent().find("div.coup-5-background-3");
@@ -1357,7 +1359,7 @@ var MainFunctions = {
 		
 		if(ShouldDo("PostBackgroundColor")){
 			rgb = styles.PostBackgroundColor.ToHex().ToRGB();
-			$(postBg).css("background-color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.PostBackground1ImageOpacity + ")");
+			$(postBg3).css("background-color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.PostBackground1ImageOpacity + ")");
 		}
 		
 		if(ShouldDo("PostBackgroundGradientLeft") && ShouldDo("PostBackgroundGradientRight")){
@@ -1374,14 +1376,14 @@ var MainFunctions = {
 			$(postBg).css("background-attachment", styles.PostBackground1ImageAttachment != Styles.DEFAULT_STYLE ? styles.PostBackground1ImageAttachment : "scroll");
 			$(postBg).css("background-image", "url(\"" + styles.PostBackground1Image.HTMLEncode() + "\")");
 		}
-		if(postBg2.length){
+		if(ShouldDo("PostBackground2Image")){
 			$(postBg2).css("opacity", styles.PostBackground2ImageOpacity);
 			$(postBg2).css("background-repeat", styles.PostBackground2ImageRepeat != Styles.DEFAULT_STYLE ? styles.PostBackground2ImageRepeat : "repeat");
 			$(postBg2).css("background-position", styles.PostBackground2ImagePosition != Styles.DEFAULT_STYLE ? styles.PostBackground2ImagePosition : "0% 0%");
 			$(postBg2).css("background-attachment", styles.PostBackground2ImageAttachment != Styles.DEFAULT_STYLE ? styles.PostBackground2ImageAttachment : "scroll");
 			$(postBg2).css("background-image", "url(\"" + styles.PostBackground2Image.HTMLEncode() + "\")");
 		}
-		if(postBg3.length){
+		if(ShouldDo("PostBackground3Image")){
 			$(postBg3).css("opacity", styles.PostBackground3ImageOpacity);
 			$(postBg3).css("background-repeat", styles.PostBackground3ImageRepeat != Styles.DEFAULT_STYLE ? styles.PostBackground3ImageRepeat : "repeat");
 			$(postBg3).css("background-position", styles.PostBackground3ImagePosition != Styles.DEFAULT_STYLE ? styles.PostBackground3ImagePosition : "0% 0%");
