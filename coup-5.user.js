@@ -1,21 +1,21 @@
 // ==UserScript==
 // @name			Coup d'Bungie 5 for Firefox
-// @namespace	   http://userscripts.org/scripts/show/97979
+// @namespace		https://github.com/Shou-/Coup-5
 // @description		Personlize your bungie.net experience
-// @version	 		5.3.5.2
-// @include		 http*://*bungie.net/*
-// @exclude		 http*://*bungie.net/*createpost.aspx*
-// @exclude		 http*://*bungie.net/Account/Playtest/*
-// @exclude		 http*://*bungie.net/Account/Settings.aspx*
-// @author	  		dazarobbo
+// @version	 		5.4.0
+// @include			http*://*bungie.net/*
+// @exclude			http*://*bungie.net/*createpost.aspx*
+// @exclude			http*://*bungie.net/Account/Playtest/*
+// @exclude			http*://*bungie.net/Account/Settings.aspx*
+// @author			dazarobbo
 // @copyright		2011, dazarobbo
 // @contributor		Iggyhopper
 // @contributor		Tidus Zero
-// @contributor     DavidJCobb
+// @contributor		DavidJCobb
 // @require			http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js
 // @require			http://dohpaz.com/flydom/js/jquery.flydom-3.1.1.js
 // @require			http://shou.dyndns-server.com/file/upload/coup5/jquerywheelcolorpickermin.js
-// @license 		(CC) Attribution Non-Commercial Share Alike; http://creativecommons.org/licenses/by-nc-sa/3.0/
+// @license			(CC) Attribution Non-Commercial Share Alike; http://creativecommons.org/licenses/by-nc-sa/3.0/
 // ==/UserScript==
 
 //New Console
@@ -785,7 +785,7 @@ var CoupDBungie = {
 	
 	Debug:true,
 	
-	Version:"5.3.5.1",
+	Version:"5.4.0",
 	Platform:"Firefox",
 	Author:"dazarobbo",
 	AuthorMemberID:2758679,
@@ -1542,7 +1542,14 @@ var MainFunctions = {
 												"br", null, null,
 												"br", null, null,
 												"span", null, "To use Coup d&#39;Bungie 5, you must first register. You only need to do this once and once only. There is more information about the registeration process in the FAQ on Registeration link below. Please note: ",
-												"b", {style:{textDecoration:"underline"}}, "You will not be able to use many of the features of Coup d&#39;Bungie 5 if you have not registered"
+												"b", {style:{textDecoration:"underline"}}, "You will not be able to use many of the features of Coup d&#39;Bungie 5 if you have not registered",
+												"br", null, null,
+												"br", null, null,
+												"div", null, [
+													"span", null, "Having issues registering? ",
+													"a", {href:"http://www.bungie.net/fanclub/308401/Forums/posts.aspx?postID=68482978"}, "Read this thread.",
+													"span", null, " Still having issues? Post your issue in the Coup group, with error messages if any."
+												]
 											]
 										]
 									],
@@ -1696,7 +1703,13 @@ var MainFunctions = {
 												"span", null, "Here is where you can publish a new set of styles. If you haven't already, you should read up on ",
 												"a", {href:"/fanclub/404459/Forums/posts.aspx?postID=60124459", target:"_blank"}, "what is and what is not permitted",
 												"span", null, " to be published, as well as the restrictions. If you feel that they are too restrictive, or just want to suggest an idea or feature, please make a topic about it in the ",
-												"a", {href:"/fanclub/coup5/Group/GroupHome.aspx", target:"_blank"}, "Coup d'Bungie 5 forum"
+												"a", {href:"/fanclub/coup5/Group/GroupHome.aspx", target:"_blank"}, "Coup d'Bungie 5 forum",
+												"br", null, null,
+												"br", null, null,
+												"div", null, [
+													"span", null, "Having issues with publishing? ",
+													"a", {href:"http://www.bungie.net/fanclub/308401/Forums/posts.aspx?postID=68482978"}, "Read this thread. "
+												]
 											]
 										]
 									],
@@ -2233,17 +2246,53 @@ var MainFunctions = {
 											"legend", {style:{margin:"10px"}}, "Global maximum opacity",
 											"div", null, [
 												"div", {style:{height:"27px"}}, [
-													"span", null, "Titlebar opacity:",
-													"input", {type:"range", name:"TitlebarBackgroundOpacity", placeholder:"Value between 0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"span", null, "Titlebar background opacity:",
+													"input", {type:"range", name:"TitlebarBackgroundOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+												],
+												"div", {style:{height:"27px"}}, [
+													"span", null, "Titlebar group text opacity:",
+													"input", {type:"range", name:"TitlebarGroupTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+												],
+												"div", {style:{height:"27px"}}, [
+													"span", null, "Titlebar message text opacity:",
+													"input", {type:"range", name:"TitlebarMessageTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+												],
+												"div", {style:{height:"27px"}}, [
+													"span", null, "Titlebar more opacity:",
+													"input", {type:"range", name:"TitlebarMoreOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+												],
+												"div", {style:{height:"27px"}}, [
+													"span", null, "Titlebar title text opacity:",
+													"input", {type:"range", name:"TitlebarTitleTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+												],
+												"div", {style:{height:"27px"}}, [
+													"span", null, "Titlebar username text opacity:",
+													"input", {type:"range", name:"TitlebarUsernameTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Avatar opacity:",
-													"input", {type:"range", name:"AvatarOpacity", placeholder:"Value between 0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"range", name:"AvatarOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
-													"span", null, "Post opacity:",
-													"input", {type:"range", name:"PostBackground1ImageOpacity", placeholder:"Value between 0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-												]
+													"span", null, "Post background 1 opacity:",
+													"input", {type:"range", name:"PostBackground1ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+												],
+												"div", {style:{height:"27px"}}, [
+													"span", null, "Post background 2 opacity:",
+													"input", {type:"range", name:"PostBackground2ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+												],
+												"div", {style:{height:"27px"}}, [
+													"span", null, "Post background 3 opacity:",
+													"input", {type:"range", name:"PostBackground3ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+												],
+												"div", {style:{height:"27px"}}, [
+													"span", null, "Post text opacity:",
+													"input", {type:"range", name:"PostFontOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+												],
+												"div", {style:{height:"27px"}}, [
+													"span", null, "Post link opacity:",
+													"input", {type:"range", name:"PostLinkOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+												],
 											]
 										],
 										"fieldset", {style:{border:"1px solid", padding:"5px"}}, [
@@ -2352,21 +2401,15 @@ var MainFunctions = {
 												],
 												"tr", null, [
 													"td", null, [
-														"input", {type:"checkbox", name:"PostBackground1ImageRepeat"}
+														"input", {type:"checkbox", name:"PostBackground2Image"}
 													],
-													"td", null, "Post background 1 repeat"
+													"td", null, "Post background 2 image"
 												],
 												"tr", null, [
 													"td", null, [
-														"input", {type:"checkbox", name:"PostBackground1ImageAttachment"}
+														"input", {type:"checkbox", name:"PostBackground3Image"}
 													],
-													"td", null, "Post background 1 image attachment"
-												],
-												"tr", null, [
-													"td", null, [
-														"input", {type:"checkbox", name:"PostBackground1ImagePosition"}
-													],
-													"td", null, "Post background 1 position"
+													"td", null, "Post background 3 image"
 												],
 												"tr", null, [
 													"td", null, [
@@ -2397,7 +2440,25 @@ var MainFunctions = {
 														"input", {type:"checkbox", name:"PostLinkColor"}
 													],
 													"td", null, "Post link color"
-												]
+												],
+												"tr", null, [
+													"td", null, [
+														"input", {type:"checkbox", name:"QuoteBackgroundColor"}
+													],
+													"td", null, "Quote background color"
+												],
+												"tr", null, [
+													"td", null, [
+														"input", {type:"checkbox", name:"QuoteBorderColor"}
+													],
+													"td", null, "Quote border color"
+												],
+												"tr", null, [
+													"td", null, [
+														"input", {type:"checkbox", name:"QuoteFontColor"}
+													],
+													"td", null, "Quote font color"
+												],
 											]
 										]
 									],
