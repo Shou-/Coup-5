@@ -11,6 +11,7 @@
 // @copyright		2011, dazarobbo
 // @contributor		Iggyhopper
 // @contributor		Tidus Zero
+// @contributor     DavidJCobb
 // @require			http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js
 // @require			http://dohpaz.com/flydom/js/jquery.flydom-3.1.1.js
 // @require			http://shou.dyndns-server.com/file/upload/coup5/jquerywheelcolorpickermin.js
@@ -542,27 +543,21 @@ function IgnoreSpawn(username)
 								],
 								"tr", null, [
 									"td", null, [
-										"input", {type:"checkbox", name:"PostBackgroundImage"}
+										"input", {type:"checkbox", name:"PostBackground1Image"}
 									],
-									"td", null, "Post background image"
+									"td", null, "Post background 1 image"
 								],
 								"tr", null, [
 									"td", null, [
-										"input", {type:"checkbox", name:"PostBackgroundImageRepeat"}
+										"input", {type:"checkbox", name:"PostBackground2Image"}
 									],
-									"td", null, "Post background repeat"
+									"td", null, "Post background 2 image"
 								],
 								"tr", null, [
 									"td", null, [
-										"input", {type:"checkbox", name:"PostBackgroundImageAttachment"}
+										"input", {type:"checkbox", name:"PostBackground3Image"}
 									],
-									"td", null, "Post background image attachment"
-								],
-								"tr", null, [
-									"td", null, [
-										"input", {type:"checkbox", name:"PostBackgroundImagePosition"}
-									],
-									"td", null, "Post background position"
+									"td", null, "Post background 3 image"
 								],
 								"tr", null, [
 									"td", null, [
@@ -593,22 +588,76 @@ function IgnoreSpawn(username)
 										"input", {type:"checkbox", name:"PostLinkColor"}
 									],
 									"td", null, "Post link color"
-								]
+								],
+								"tr", null, [
+									"td", null, [
+										"input", {type:"checkbox", name:"QuoteBackgroundColor"}
+									],
+									"td", null, "Quote background color"
+								],
+								"tr", null, [
+									"td", null, [
+										"input", {type:"checkbox", name:"QuoteBorderColor"}
+									],
+									"td", null, "Quote border color"
+								],
+								"tr", null, [
+									"td", null, [
+										"input", {type:"checkbox", name:"QuoteFontColor"}
+									],
+									"td", null, "Quote font color"
+								],
 							]
 						]
 					],
 					"div", {style:{display:"table-cell", width:"360px", padding:"5px", maxWidth:"50%"}}, [
-						"div", {style:{height:"25px"}}, [
-							"span", null, "Titlebar opacity:",
-							"input", {type:"range", value:1, name:"TitlebarBackgroundOpacity", placeholder:"Value between 0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+						"div", {style:{height:"27px"}}, [
+							"span", null, "Titlebar background opacity:",
+							"input", {type:"range", value:1, name:"TitlebarBackgroundOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
-						"div", {style:{height:"25px"}}, [
+						"div", {style:{height:"27px"}}, [
+							"span", null, "Titlebar group text opacity",
+							"input", {type:"range", value:1, name:"TitlebarGroupTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+						],
+						"div", {style:{height:"27px"}}, [
+							"span", null, "Titlebar message text opacity",
+							"input", {type:"range", value:1, name:"TitlebarMessageTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+						],
+						"div", {style:{height:"27px"}}, [
+							"span", null, "Titlebar more text opacity",
+							"input", {type:"range", value:1, name:"TitlebarMoreOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+						],
+						"div", {style:{height:"27px"}}, [
+							"span", null, "Titlebar title text opacity",
+							"input", {type:"range", value:1, name:"TitlebarTitleTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+						],
+						"div", {style:{height:"27px"}}, [
+							"span", null, "Titlebar username text opacity",
+							"input", {type:"range", value:1, name:"TitlebarUsernameTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+						],
+						"div", {style:{height:"27px"}}, [
 							"span", null, "Avatar opacity:",
-							"input", {type:"range", value:1, name:"AvatarOpacity", placeholder:"Value between 0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"range", value:1, name:"AvatarOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
-						"div", {style:{height:"25px"}}, [
-							"span", null, "Post opacity:",
-							"input", {type:"range", value:1, name:"PostBackgroundOpacity", placeholder:"Value between 0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+						"div", {style:{height:"27px"}}, [
+							"span", null, "Post background 1 opacity:",
+							"input", {type:"range", value:1, name:"PostBackground1ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+						],
+						"div", {style:{height:"27px"}}, [
+							"span", null, "Post background 2 opacity",
+							"input", {type:"range", value:1, name:"PostBackground2ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+						],
+						"div", {style:{height:"27px"}}, [
+							"span", null, "Post background 3 opacity",
+							"input", {type:"range", value:1, name:"PostBackground3ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+						],
+						"div", {style:{height:"27px"}}, [
+							"span", null, "Post text opacity",
+							"input", {type:"range", value:1, name:"PostFontOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+						],
+						"div", {style:{height:"27px"}}, [
+							"span", null, "Post link opacity",
+							"input", {type:"range", value:1, name:"PostLinkOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						]
 					]
 				],
@@ -724,7 +773,7 @@ function IgnoreLive()
 	//End IgnoreList checkbox event
 	
 	//IgnoreList range input event
-	$("#coup5ignorespawn input[type='range']").live('keyup blur', function(){
+	$("#coup5ignorespawn input[type='range']").live('blur', function(){
 		var username = $("#coup5ignorespawnusername").text();
 		Options.Add('coup5ignorelist', username, $(this).attr('name'), parseFloat($(this).val()));
 	});
@@ -820,7 +869,7 @@ var Cache = {
 	CACHE_NAME:"Coup5Cache",
 	LAST_CACHE_DUMP_NAME:"Coup5Cache_LastDump",
 	LAST_CACHE_DUMP:null,
-	CACHE_INTERVAL_RATE:20, //Measured in minutes per hour (so for 20 mins, three cache dumps per hour)
+	CACHE_INTERVAL_RATE:5, //Measured in minutes per hour (so for 20 mins, three cache dumps per hour)
 	MAX_PAGES:200,
 	WorkingSet:[],
 	
@@ -1108,7 +1157,6 @@ Styles.SPECIAL_DEFAULTS =
 		"TitlebarGroupTextOpacity": 1,
 		"TitlebarBackgroundOpacity": 1,
 		"TitlebarMoreOpacity": 1,
-		"PostBacground1ImageOpacity": 1,	// to account for a server-side typo
 		"PostBackground1ImageOpacity": 1,
 		"PostBackground2ImageOpacity": 1,
 		"PostBackground3ImageOpacity": 1,
@@ -1174,7 +1222,7 @@ var MainFunctions = {
 		var icheckbox = temp[usernameElem.text()] != undefined ? temp[usernameElem.text()] : {};
 		delete(temp);
 		var checked = 'checked="checked"';
-		
+
 		var NotDefault = function(a) { return a && a != Styles.DEFAULT_STYLE };
 		var ShouldDo = function(a) { return NotDefault(styles[a]) && ocheckbox[a] != checked && ignoreValueExists(a) };
 
@@ -1193,12 +1241,12 @@ var MainFunctions = {
 		NormalizeOpacity("TitlebarBackgroundOpacity");
 		NormalizeOpacity("TitlebarMoreOpacity");
 		NormalizeOpacity("AvatarOpacity");
-		NormalizeOpacity("PostBackground1ImageOpacity", "PostBackgroundOpacity");
-		NormalizeOpacity("PostBackground2ImageOpacity", "PostBackgroundOpacity");
-		NormalizeOpacity("PostBackground3ImageOpacity", "PostBackgroundOpacity");
+		NormalizeOpacity("PostBackground1ImageOpacity");
+		NormalizeOpacity("PostBackground2ImageOpacity");
+		NormalizeOpacity("PostBackground3ImageOpacity");
 		NormalizeOpacity("PostFontOpacity");
 		NormalizeOpacity("PostLinkOpacity");
-				
+
 		function ignoreValueExists(o){
 			if(icheckbox[o] != undefined){
 				return icheckbox[o];
@@ -1206,6 +1254,7 @@ var MainFunctions = {
 				return true;
 			}
 		}
+
 		try {
 			defaultTitlebarColor = /background-color\:\s*((\S|\s)*?)\;/i.exec($(element).find("ul.author_header_block").attr('style'))[1];
 		} catch(e) {
@@ -1213,9 +1262,8 @@ var MainFunctions = {
 		}
 		$(element).find("ul.author_header_block").css({backgroundColor:"transparent", position:"relative"}); 
 		$(element).find("ul.author_header_block").parent().createPrepend("div", {style:{position:"absolute", top:0, left:0, width:"100%", height:"24px"}});
-		var titlebar = $(element).find("ul.author_header_block").prev();
-		
 		//Set titlebar
+		var titlebar = $(element).find("ul.author_header_block").prev();
 		if (ShouldDo("TitlebarBackgroundColor")) {
 			rgb = styles.TitlebarBackgroundColor.ToHex().ToRGB();
 			$(titlebar).css("background-color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.TitlebarBackgroundOpacity + ")");
@@ -1229,16 +1277,17 @@ var MainFunctions = {
 		}
 		if(ShouldDo("TitlebarBackgroundImage")){
 			$(titlebar).css("background-image", "url(\"" + styles.TitlebarBackgroundImage.HTMLEncode() + "\")");
-			$(titlebar).css("opacity", styles.TitlebarBackgroundOpacity);
 		}
 		if(ShouldDo("TitlebarBorderColor") && ShouldDo("TitlebarBorderStyle") && ocheckbox['TitlebarBorder'] != checked && ignoreValueExists('TitlebarBorder')){
 			$(titlebar).css("border", "1px solid #" + styles.TitlebarBorderColor.HTMLEncode());
 			$(titlebar).css("border-style", styles.TitlebarBorderStyle.HTMLEncode());
 		}
 
+		//Set more text
 		var moreElem = $(element).find("ul.author_header_block li.author_header_links:contains('more')");
 		moreElem.css("opacity", styles.TitlebarMoreOpacity);
-		
+
+		//Set group text
 		var groupElem = $(element).find("ul.author_header_block li.author_header_links > a:contains('groups')");
 		groupElem.css("opacity", styles.TitlebarGroupTextOpacity);
 		if(ShouldDo("TitlebarGroupText")){
@@ -1246,7 +1295,9 @@ var MainFunctions = {
 		}
 		if(ShouldDo("TitlebarGroupTextColor")){
 			groupElem.css("color", "#" + styles.TitlebarGroupTextColor.HTMLEncode());
-		}			
+		}
+
+		//Set message text
 		var msgElem = $(element).find("ul.author_header_block li.author_header_links > a:contains('message user')");
 		msgElem.css("opacity", styles.TitlebarMessageTextOpacity);
 		if(ShouldDo("TitlebarMessageText")){
@@ -1255,6 +1306,8 @@ var MainFunctions = {
 		if(ShouldDo("TitlebarMessageTextColor")){
 			msgElem.css("color", "#" + styles.TitlebarMessageTextColor.HTMLEncode());
 		}
+
+		//Set title text
 		var titleElem = $(element).find("ul.author_header_block li.title");
 		titleElem.css("opacity", styles.TitlebarTitleTextOpacity);
 		if(ShouldDo("TitlebarTitleText")){
@@ -1271,7 +1324,7 @@ var MainFunctions = {
 		if(ShouldDo("TitlebarUsernameTextColor")){
 			usernameElem.css("color", "#" + styles.TitlebarUsernameTextColor.HTMLEncode());
 		}
-		
+
 		//Set avatar
 		$(element).find("div.forumavatar img").css("opacity", styles.AvatarOpacity);
 		if(ShouldDo("AvatarImage")){
@@ -1281,28 +1334,30 @@ var MainFunctions = {
 			$(element).find("div.forumavatar img").css({width:"88px", height:"88px"}); //MUST be set if border style is set (screws up layout if not)
 			$(element).find("div.forumavatar img").css("border", "1px " + styles.AvatarBorderStyle.HTMLEncode() + " #" + styles.AvatarBorderColor.HTMLEncode()); 
 		}
-		
+
 		//Set post
 		$(element).css({backgroundColor:"transparent", position:"relative"});
-		var bg_div_options = {style:{opacity:styles.PostBackgroundOpacity, position:"absolute", top:0, left:0, width:"670px", height:"100%"}};
+		var bg_div_options = {style:{opacity:"", position:"absolute", top:0, left:0, width:"670px", height:"100%"}};
 		$(element).parent().createPrepend("div", $.extend({class:"coup-5-background-1"},bg_div_options));
 		if (ShouldDo("PostBackground2Image"))
 			$(element).parent().createPrepend("div", $.extend({class:"coup-5-background-2"},bg_div_options));
 		if (ShouldDo("PostBackground3Image"))
 			$(element).parent().createPrepend("div", $.extend({class:"coup-5-background-3"},bg_div_options));
-		var postBg = $(element).parent().find("div:first");
+		var postBg = $(element).parent().find("div.coup-5-background-1");
 		var postBg2 = $(element).parent().find("div.coup-5-background-2");
 		var postBg3 = $(element).parent().find("div.coup-5-background-3");
 		try {
 			if(preview_) {
 				temp = $("<span></span>");
-				postBg = temp.createPrepend("div", {style:{opacity:styles.PostBackgroundOpacity, position:"absolute", top:0, left:0, width:"670px", height:"100%"}});
+				postBg = temp.createPrepend("div", $.extend(bg_div_options, {class:"coup-5-background-1", opacity:styles.PostBackground1ImageOpacity}));
+				postBg2 = temp.createPrepend("div", $.extend(bg_div_options, {class:"coup-5-background-2", opacity:styles.PostBackground2ImageOpacity}));
+				postBg3 = temp.createPrepend("div", $.extend(bg_div_options, {class:"coup-5-background-3", opacity:styles.PostBackground3ImageOpacity}));
 			}
 		} catch(e) {}
 		
 		if(ShouldDo("PostBackgroundColor")){
 			rgb = styles.PostBackgroundColor.ToHex().ToRGB();
-			$(postBg).css("background-color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.PostBackgroundOpacity + ")"); 
+			$(postBg).css("background-color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.PostBackground1ImageOpacity + ")");
 		}
 		
 		if(ShouldDo("PostBackgroundGradientLeft") && ShouldDo("PostBackgroundGradientRight")){
@@ -1332,8 +1387,21 @@ var MainFunctions = {
 			$(postBg3).css("background-position", styles.PostBackground3ImagePosition != Styles.DEFAULT_STYLE ? styles.PostBackground3ImagePosition : "0% 0%");
 			$(postBg3).css("background-attachment", styles.PostBackground3ImageAttachment != Styles.DEFAULT_STYLE ? styles.PostBackground3ImageAttachment : "scroll");
 			$(postBg3).css("background-image", "url(\"" + styles.PostBackground3Image.HTMLEncode() + "\")");
-		}		
-		
+		}
+
+		//Set quote blocks
+		var quoteElem = $(element).find("span.IBBquotedtable");
+		if(ShouldDo("QuoteBackgroundColor")){
+			quoteElem.css("background-color", '#' + styles.QuoteBackgroundColor);
+		}
+		if(ShouldDo("QuoteBorderColor")){
+			quoteElem.css("border-color", '#' + styles.QuoteBorderColor);
+		}
+		if(ShouldDo("QuoteFontColor")){
+			quoteElem.css("color", '#' + styles.QuoteFontColor);
+		}
+
+		//Set post text
 		if(ShouldDo("PostFont")){
 			$(element).find("div.postbody > p").css("font-family", styles.PostFont.HTMLEncode());
 		}
@@ -1344,11 +1412,10 @@ var MainFunctions = {
 			$(element).find("div.postbody > p").css("opacity", styles.PostFontOpacity);
 		}
 		if(ShouldDo("PostLinkColor")){
-			$(element).find("div.postbody > p a").css("color", "#" + styles.PostLinkColor.HTMLEncode());
+			rgb = styles.PostLinkColor.ToHex().ToRGB();
+			$(element).find("div.postbody > p a").css("color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.PostLinkOpacity + ")");
 		}
-		if(ShouldDo("PostLinkOpacity")){
-			$(element).find("div.postbody > p a").css("opacity", styles.PostLinkOpacity);
-		}
+
 		try {
 			if(preview_) {
 				temp.append(element);
@@ -1422,7 +1489,7 @@ var MainFunctions = {
 											]
 										]
 									],
-									"p", {style:'margin:0px 0px 1em;'}, "Lorem ipsum dolor sit amet, <a href=\"javascript:;\">consectetur</a> adipiscing <b>elit</b>. Curabitur condimentum, est et <i>aliquet</i> adipiscing, sem felis fermentum turpis, sed <u>tincidunt</u> erat nulla vel nisl. <a hreg=\"javascrpt:;\">Aliquam</a> tristique interdum tempor. Sed commodo ipsum a odio laoreet eleifend eleifend nisl auctor. Donec molestie scelerisque orci suscipit volutpat."
+									"p", {style:'margin:0px 0px 1em;'}, "<span class=\"IBBquotedtable\">Lorem ipsum dolor sit amet, <a href=\"javascript:;\">consectetur</a> adipiscing <b>elit</b>.</span>Curabitur condimentum, est et <i>aliquet</i> adipiscing, sem felis fermentum turpis, sed <u>tincidunt</u> erat nulla vel nisl. <a href=\"javascript:;\">Aliquam</a> tristique interdum tempor. Sed commodo ipsum a odio laoreet eleifend eleifend nisl auctor. Donec molestie scelerisque orci suscipit volutpat."
 								],
 								"div", {className:"post-actions"}, [
 									"ul", null, [
@@ -1642,140 +1709,140 @@ var MainFunctions = {
 									"tr", null, [
 										"td", null, "TitlebarUsernameText: ",
 										"td", null, [
-											"input", {id:"TitlebarUsernameText"}, null
+											"input", {placeholder:"*", id:"TitlebarUsernameText"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarUsernameTextColor: ",
 										"td", null, [
-											"input", {id:"TitlebarUsernameTextColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"TitlebarUsernameTextColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarUsernameTextOpacity: ",
 										"td", null, [
-											"input", {id:"TitlebarUsernameTextOpacity"}, null
+											"input", {placeholder:"*", id:"TitlebarUsernameTextOpacity"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarTitleText: ",
 										"td", null, [
-											"input", {id:"TitlebarTitleText"}, null
+											"input", {placeholder:"*", id:"TitlebarTitleText"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarTitleTextColor: ",
 										"td", null, [
-											"input", {id:"TitlebarTitleTextColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"TitlebarTitleTextColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarTitleTextOpacity: ",
 										"td", null, [
-											"input", {id:"TitlebarTitleTextOpacity"}, null
+											"input", {placeholder:"*", id:"TitlebarTitleTextOpacity"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarMessageText: ",
 										"td", null, [
-											"input", {id:"TitlebarMessageText"}, null
+											"input", {placeholder:"*", id:"TitlebarMessageText"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarMessageTextColor: ",
 										"td", null, [
-											"input", {id:"TitlebarMessageTextColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"TitlebarMessageTextColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarMessageTextOpacity: ",
 										"td", null, [
-											"input", {id:"TitlebarMessageTextOpacity"}, null
+											"input", {placeholder:"*", id:"TitlebarMessageTextOpacity"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarGroupText: ",
 										"td", null, [
-											"input", {id:"TitlebarGroupText"}, null
+											"input", {placeholder:"*", id:"TitlebarGroupText"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarGroupTextColor: ",
 										"td", null, [
-											"input", {id:"TitlebarGroupTextColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"TitlebarGroupTextColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarGroupTextOpacity: ",
 										"td", null, [
-											"input", {id:"TitlebarGroupTextOpacity"}, null
+											"input", {placeholder:"*", id:"TitlebarGroupTextOpacity"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBackgroundImage: ",
 										"td", null, [
-											"input", {id:"TitlebarBackgroundImage"}, null
+											"input", {placeholder:"*", id:"TitlebarBackgroundImage"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBackgroundOpacity: ",
 										"td", null, [
-											"input", {id:"TitlebarBackgroundOpacity"}, null
+											"input", {placeholder:"*", id:"TitlebarBackgroundOpacity"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBackgroundColor: ",
 										"td", null, [
-											"input", {id:"TitlebarBackgroundColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"TitlebarBackgroundColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBackgroundGradientLeft: ",
 										"td", null, [
-											"input", {id:"TitlebarBackgroundGradientLeft", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"TitlebarBackgroundGradientLeft", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBackgroundGradientRight: ",
 										"td", null, [
-											"input", {id:"TitlebarBackgroundGradientRight", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"TitlebarBackgroundGradientRight", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBorderStyle: ",
 										"td", null, [
-											"input", {id:"TitlebarBorderStyle"}, null
+											"input", {placeholder:"*", id:"TitlebarBorderStyle"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBorderColor: ",
 										"td", null, [
-											"input", {id:"TitlebarBorderColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"TitlebarBorderColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarMoreOpacity: ",
 										"td", null, [
-											"input", {id:"TitlebarMoreOpacity"}, null
+											"input", {placeholder:"*", id:"TitlebarMoreOpacity"}, null
 										]
 									],
 									
@@ -1788,28 +1855,28 @@ var MainFunctions = {
 									"tr", null, [
 										"td", null, "AvatarImage: ",
 										"td", null, [
-											"input", {id:"AvatarImage"}, null
+											"input", {placeholder:"*", id:"AvatarImage"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "AvatarOpacity: ",
 										"td", null, [
-											"input", {id:"AvatarOpacity"}, null
+											"input", {placeholder:"*", id:"AvatarOpacity"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "AvatarBorderStyle: ",
 										"td", null, [
-											"input", {id:"AvatarBorderStyle"}, null
+											"input", {placeholder:"*", id:"AvatarBorderStyle"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "AvatarBorderColor: ",
 										"td", null, [
-											"input", {id:"AvatarBorderColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"AvatarBorderColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
@@ -1822,161 +1889,161 @@ var MainFunctions = {
 									"tr", null, [
 										"td", null, "PostBackgroundColor: ",
 										"td", null, [
-											"input", {id:"PostBackgroundColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"PostBackgroundColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackgroundGradientLeft: ",
 										"td", null, [
-											"input", {id:"PostBackgroundGradientLeft", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"PostBackgroundGradientLeft", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackgroundGradientRight: ",
 										"td", null, [
-											"input", {id:"PostBackgroundGradientRight", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"PostBackgroundGradientRight", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
-										"td", null, "PostBackgroundImage: ",
+										"td", null, "PostBackground1Image: ",
 										"td", null, [
-											"input", {id:"PostBackgroundImage"}, null
+											"input", {placeholder:"*", id:"PostBackground1Image"}, null
 										]
 									],
 									
 									"tr", null, [
-										"td", null, "PostBackgroundImageOpacity: ",
+										"td", null, "PostBackground1ImageOpacity: ",
 										"td", null, [
-											"input", {id:"PostBackgroundOpacity"}, null
+											"input", {placeholder:"*", id:"PostBackground1ImageOpacity"}, null
 										]
 									],
 									
 									"tr", null, [
-										"td", null, "PostBackgroundImagePosition: ",
+										"td", null, "PostBackground1ImagePosition: ",
 										"td", null, [
-											"input", {id:"PostBackgroundImagePosition"}, null
+											"input", {placeholder:"*", id:"PostBackground1ImagePosition"}, null
 										]
 									],
 									
 									"tr", null, [
-										"td", null, "PostBackgroundImageAttachment: ",
+										"td", null, "PostBackground1ImageAttachment: ",
 										"td", null, [
-											"input", {id:"PostBackgroundImageAttachment"}, null
+											"input", {placeholder:"*", id:"PostBackground1ImageAttachment"}, null
 										]
 									],
 									
 									"tr", null, [
-										"td", null, "PostBackgroundImageRepeat: ",
+										"td", null, "PostBackground1ImageRepeat: ",
 										"td", null, [
-											"input", {id:"PostBackgroundImageRepeat"}, null
+											"input", {placeholder:"*", id:"PostBackground1ImageRepeat"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground2Image: ",
 										"td", null, [
-											"input", {id:"PostBackground2Image"}, null
+											"input", {placeholder:"*", id:"PostBackground2Image"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground2ImageOpacity: ",
 										"td", null, [
-											"input", {id:"PostBackground2Opacity"}, null
+											"input", {placeholder:"*", id:"PostBackground2ImageOpacity"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground2ImagePosition: ",
 										"td", null, [
-											"input", {id:"PostBackground2ImagePosition"}, null
+											"input", {placeholder:"*", id:"PostBackground2ImagePosition"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground2ImageAttachment: ",
 										"td", null, [
-											"input", {id:"PostBackground2ImageAttachment"}, null
+											"input", {placeholder:"*", id:"PostBackground2ImageAttachment"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground2ImageRepeat: ",
 										"td", null, [
-											"input", {id:"PostBackground2ImageRepeat"}, null
+											"input", {placeholder:"*", id:"PostBackground2ImageRepeat"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground3Image: ",
 										"td", null, [
-											"input", {id:"PostBackground3Image"}, null
+											"input", {placeholder:"*", id:"PostBackground3Image"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground3ImageOpacity: ",
 										"td", null, [
-											"input", {id:"PostBackground3Opacity"}, null
+											"input", {placeholder:"*", id:"PostBackground3ImageOpacity"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground3ImagePosition: ",
 										"td", null, [
-											"input", {id:"PostBackground3ImagePosition"}, null
+											"input", {placeholder:"*", id:"PostBackground3ImagePosition"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground3ImageAttachment: ",
 										"td", null, [
-											"input", {id:"PostBackground3ImageAttachment"}, null
+											"input", {placeholder:"*", id:"PostBackground3ImageAttachment"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground3ImageRepeat: ",
 										"td", null, [
-											"input", {id:"PostBackground3ImageRepeat"}, null
+											"input", {placeholder:"*", id:"PostBackground3ImageRepeat"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostFont: ",
 										"td", null, [
-											"input", {id:"PostFont"}, null
+											"input", {placeholder:"*", id:"PostFont"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostFontColor: ",
 										"td", null, [
-											"input", {id:"PostFontColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"PostFontColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostFontOpacity: ",
 										"td", null, [
-											"input", {id:"PostFontOpacity"}, null
+											"input", {placeholder:"*", id:"PostFontOpacity"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostLinkColor: ",
 										"td", null, [
-											"input", {id:"PostLinkColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"PostLinkColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "PostLinkOpacity: ",
 										"td", null, [
-											"input", {id:"PostLinkOpacity"}, null
+											"input", {placeholder:"*", id:"PostLinkOpacity"}, null
 										]
 									],
 									
@@ -1989,21 +2056,21 @@ var MainFunctions = {
 									"tr", null, [
 										"td", null, "QuoteBorderColor: ",
 										"td", null, [
-											"input", {id:"QuoteBorderColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"QuoteBorderColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "QuoteFontColor: ",
 										"td", null, [
-											"input", {id:"QuoteFontColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"QuoteFontColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
 									"tr", null, [
 										"td", null, "QuoteBackgroundColor: ",
 										"td", null, [
-											"input", {id:"QuoteBackgroundColor", className:"Coup5ColorWheel"}, null
+											"input", {placeholder:"*", id:"QuoteBackgroundColor", className:"Coup5ColorWheel"}, null
 										]
 									],
 									
@@ -2049,19 +2116,18 @@ var MainFunctions = {
 													s.AvatarBorderStyle = $("#AvatarBorderStyle").val();
 													s.AvatarBorderColor = $("#AvatarBorderColor").val().toLowerCase();
 													
-													s.PostBackground1Image = $("#PostBackgroundImage").val();
-													s.PostBackground1ImageOpacity = $("#PostBackgroundOpacity").val();
-													s.PostBacground1ImageOpacity = $("#PostBackgroundOpacity").val();	// I think there's a typo in the server-side code
-													s.PostBackground1ImagePosition = $("#PostBackgroundImagePosition").val();
-													s.PostBackground1ImageAttachment = $("#PostBackgroundImageAttachment").val();
-													s.PostBackground1ImageRepeat = $("#PostBackgroundImageRepeat").val();
+													s.PostBackground1Image = $("#PostBackground1Image").val();
+													s.PostBackground1ImageOpacity = $("#PostBackground1ImageOpacity").val();
+													s.PostBackground1ImagePosition = $("#PostBackground1ImagePosition").val();
+													s.PostBackground1ImageAttachment = $("#PostBackground1ImageAttachment").val();
+													s.PostBackground1ImageRepeat = $("#PostBackground1ImageRepeat").val();
 													s.PostBackground2Image = $("#PostBackground2Image").val();
-													s.PostBackground2ImageOpacity = $("#PostBackground2Opacity").val();
+													s.PostBackground2ImageOpacity = $("#PostBackground2ImageOpacity").val();
 													s.PostBackground2ImagePosition = $("#PostBackground2ImagePosition").val();
 													s.PostBackground2ImageAttachment = $("#PostBackground2ImageAttachment").val();
 													s.PostBackground2ImageRepeat = $("#PostBackground2ImageRepeat").val();
 													s.PostBackground3Image = $("#PostBackground3Image").val();
-													s.PostBackground3ImageOpacity = $("#PostBackground3Opacity").val();
+													s.PostBackground3ImageOpacity = $("#PostBackground3ImageOpacity").val();
 													s.PostBackground3ImagePosition = $("#PostBackground3ImagePosition").val();
 													s.PostBackground3ImageAttachment = $("#PostBackground3ImageAttachment").val();
 													s.PostBackground3ImageRepeat = $("#PostBackground3ImageRepeat").val();
@@ -2166,24 +2232,24 @@ var MainFunctions = {
 										"fieldset", {style:{border:"1px solid", padding:"5px"}}, [
 											"legend", {style:{margin:"10px"}}, "Global maximum opacity",
 											"div", null, [
-												"div", {style:{height:"25px"}}, [
+												"div", {style:{height:"27px"}}, [
 													"span", null, "Titlebar opacity:",
 													"input", {type:"range", name:"TitlebarBackgroundOpacity", placeholder:"Value between 0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
-												"div", {style:{height:"25px"}}, [
+												"div", {style:{height:"27px"}}, [
 													"span", null, "Avatar opacity:",
 													"input", {type:"range", name:"AvatarOpacity", placeholder:"Value between 0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
-												"div", {style:{height:"25px"}}, [
+												"div", {style:{height:"27px"}}, [
 													"span", null, "Post opacity:",
-													"input", {type:"range", name:"PostBackgroundOpacity", placeholder:"Value between 0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"range", name:"PostBackground1ImageOpacity", placeholder:"Value between 0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												]
 											]
 										],
 										"fieldset", {style:{border:"1px solid", padding:"5px"}}, [
 											"legend", {style:{margin:"10px"}}, "Misc.",
 											"div", {'class':'coup5miscoptions'}, [
-												"div", {style:{height:"25px"}}, [
+												"div", {style:{height:"27px"}}, [
 													"span", null,  "GM Storage:",
 													"input", {type:"checkbox", name:"coup5storagetype", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px"}}, null
 												]
@@ -2280,27 +2346,27 @@ var MainFunctions = {
 												],
 												"tr", null, [
 													"td", null, [
-														"input", {type:"checkbox", name:"PostBackgroundImage"}
+														"input", {type:"checkbox", name:"PostBackground1Image"}
 													],
-													"td", null, "Post background image"
+													"td", null, "Post background 1 image"
 												],
 												"tr", null, [
 													"td", null, [
-														"input", {type:"checkbox", name:"PostBackgroundImageRepeat"}
+														"input", {type:"checkbox", name:"PostBackground1ImageRepeat"}
 													],
-													"td", null, "Post background repeat"
+													"td", null, "Post background 1 repeat"
 												],
 												"tr", null, [
 													"td", null, [
-														"input", {type:"checkbox", name:"PostBackgroundImageAttachment"}
+														"input", {type:"checkbox", name:"PostBackground1ImageAttachment"}
 													],
-													"td", null, "Post background image attachment"
+													"td", null, "Post background 1 image attachment"
 												],
 												"tr", null, [
 													"td", null, [
-														"input", {type:"checkbox", name:"PostBackgroundImagePosition"}
+														"input", {type:"checkbox", name:"PostBackground1ImagePosition"}
 													],
-													"td", null, "Post background position"
+													"td", null, "Post background 1 position"
 												],
 												"tr", null, [
 													"td", null, [
@@ -2470,44 +2536,79 @@ var MainFunctions = {
 		});
 		$("body").append(box);
 		
-		$("#PublishSettingsTable input:text").bind("keyup focus", function(){
+		$("#PublishSettingsTable input:text").bind("focus", function(){
 	
 			$("#PublishSettingsPreviewBox > :not(.hideBtnBox)").remove();
 			
 			var s = new Styles();
-			
-			s.TitlebarUsernameText = $("#TitlebarUsernameText").val();
-			s.TitlebarUsernameTextColor = $("#TitlebarUsernameTextColor").val();
-			s.TitlebarTitleText = $("#TitlebarTitleText").val();
-			s.TitlebarTitleTextColor = $("#TitlebarTitleTextColor").val();
-			s.TitlebarMessageText = $("#TitlebarMessageText").val();
-			s.TitlebarMessageTextColor = $("#TitlebarMessageTextColor").val();
-			s.TitlebarGroupText = $("#TitlebarGroupText").val();
-			s.TitlebarGroupTextColor = $("#TitlebarGroupTextColor").val();
-			s.TitlebarBackgroundImage = $("#TitlebarBackgroundImage").val();
-			s.TitlebarBackgroundOpacity = $("#TitlebarBackgroundOpacity").val();
-			s.TitlebarBackgroundColor = $("#TitlebarBackgroundColor").val();
-			s.TitlebarBackgroundGradientLeft = $("#TitlebarBackgroundGradientLeft").val();
-			s.TitlebarBackgroundGradientRight = $("#TitlebarBackgroundGradientRight").val();
-			s.TitlebarBorderStyle = $("#TitlebarBorderStyle").val();
-			s.TitlebarBorderColor = $("#TitlebarBorderColor").val();
-			
+
+			s.AvatarBorderColor = $("#AvatarBorderColor").val();
+			s.AvatarBorderStyle = $("#AvatarBorderStyle").val();
+
 			s.AvatarImage = $("#AvatarImage").val();
 			s.AvatarOpacity = $("#AvatarOpacity").val();
-			s.AvatarBorderStyle = $("#AvatarBorderStyle").val();
-			s.AvatarBorderColor = $("#AvatarBorderColor").val();
+
+			s.PostBackground1Image = $("#PostBackground1Image").val();
+			s.PostBackground1ImageAttachment = $("#PostBackground1ImageAttachment").val();
+			s.PostBackground1ImageOpacity = $("#PostBackground1ImageOpacity").val();
+			s.PostBackground1ImagePosition = $("#PostBackground1ImagePosition").val();
+			s.PostBackground1ImageRepeat = $("#PostBackground1ImageRepeat").val();
 			
-			s.PostBackgroundOpacity = $("#PostBackgroundOpacity").val();
-			s.PostBackgroundImage = $("#PostBackgroundImage").val();
-			s.PostBackgroundImageRepeat = $("#PostBackgroundImageRepeat").val();
-			s.PostBackgroundImageAttachment = $("#PostBackgroundImageAttachment").val();
-			s.PostBackgroundImagePosition = $("#PostBackgroundImagePosition").val();
+			s.PostBackground2Image = $("#PostBackground2Image").val();
+			s.PostBackground2ImageAttachment = $("#PostBackground2ImageAttachment").val();
+			s.PostBackground2ImageOpacity = $("#PostBackground2ImageOpacity").val();
+			s.PostBackground2ImagePosition = $("#PostBackground2ImagePosition").val();
+			s.PostBackground2ImageRepeat = $("#PostBackground2ImageRepeat").val();
+			
+			s.PostBackground3Image = $("#PostBackground3Image").val();
+			s.PostBackground3ImageAttachment = $("#PostBackground3ImageAttachment").val();
+			s.PostBackground3ImageOpacity = $("#PostBackground3ImageOpacity").val();
+			s.PostBackground3ImagePosition = $("#PostBackground3ImagePosition").val();
+			s.PostBackground3ImageRepeat = $("#PostBackground3ImageRepeat").val();
+			
 			s.PostBackgroundColor = $("#PostBackgroundColor").val();
 			s.PostBackgroundGradientLeft = $("#PostBackgroundGradientLeft").val();
 			s.PostBackgroundGradientRight = $("#PostBackgroundGradientRight").val();
+
 			s.PostFont = $("#PostFont").val();
 			s.PostFontColor = $("#PostFontColor").val();
+			s.PostFontOpacity = $("#PostFontOpacity").val();
+
 			s.PostLinkColor = $("#PostLinkColor").val();
+			s.PostLinkOpacity = $("#PostLinkOpacity").val();
+
+			s.QuoteBackgroundColor = $("#QuoteBackgroundColor").val();
+
+			s.QuoteBorderColor = $("#QuoteBorderColor").val();
+
+			s.QuoteFontColor = $("#QuoteFontColor").val();
+
+			s.TitlebarBackgroundColor = $("#TitlebarBackgroundColor").val();
+			s.TitlebarBackgroundGradientLeft = $("#TitlebarBackgroundGradientLeft").val();
+			s.TitlebarBackgroundGradientRight = $("#TitlebarBackgroundGradientRight").val();
+			s.TitlebarBackgroundImage = $("#TitlebarBackgroundImage").val();
+			s.TitlebarBackgroundOpacity = $("#TitlebarBackgroundOpacity").val();
+
+			s.TitlebarBorderColor = $("#TitlebarBorderColor").val();
+			s.TitlebarBorderStyle = $("#TitlebarBorderStyle").val();
+
+			s.TitlebarGroupText = $("#TitlebarGroupText").val();
+			s.TitlebarGroupTextColor = $("#TitlebarGroupTextColor").val();
+			s.TitlebarGroupTextOpacity = $("#TitlebarGroupTextOpacity").val();
+
+			s.TitlebarMessageText = $("#TitlebarMessageText").val();
+			s.TitlebarMessageTextColor = $("#TitlebarMessageTextColor").val();
+			s.TitlebarMessageTextOpacity = $("#TitlebarMessageTextOpacity").val();
+
+			s.TitlebarMoreOpacity = $("#TitlebarMoreOpacity").val();
+
+			s.TitlebarTitleText = $("#TitlebarTitleText").val();
+			s.TitlebarTitleTextColor = $("#TitlebarTitleTextColor").val();
+			s.TitlebarTitleTextOpacity = $("#TitlebarTitleTextOpacity").val();
+
+			s.TitlebarUsernameText = $("#TitlebarUsernameText").val();
+			s.TitlebarUsernameTextColor = $("#TitlebarUsernameTextColor").val();
+			s.TitlebarUsernameTextOpacity = $("#TitlebarUsernameTextOpacity").val()
 			
 			$("#PublishSettingsPreviewBox").prepend(MainFunctions.GenerateStylePreview(s));
 			$(".PreviewBox").show();
@@ -2649,40 +2750,74 @@ var MainFunctions = {
 				var obj = this.GetResponseJSON();
 				if(obj != null && obj.Status === CoupDBungie.Server.Responses.OK && obj.Users[0]){
 					var s = obj.Users[0].Styles;
-					
-					$("#TitlebarUsernameText").val(s.TitlebarUsernameText);
-					$("#TitlebarUsernameTextColor").val(s.TitlebarUsernameTextColor);
-					$("#TitlebarTitleText").val(s.TitlebarTitleText);
-					$("#TitlebarTitleTextColor").val(s.TitlebarTitleTextColor);
-					$("#TitlebarMessageText").val(s.TitlebarMessageText);
-					$("#TitlebarMessageTextColor").val(s.TitlebarMessageTextColor);
-					$("#TitlebarGroupText").val(s.TitlebarGroupText);
-					$("#TitlebarGroupTextColor").val(s.TitlebarGroupTextColor);
-					$("#TitlebarBackgroundImage").val(s.TitlebarBackgroundImage);
-					$("#TitlebarBackgroundOpacity").val(s.TitlebarBackgroundOpacity);
-					$("#TitlebarBackgroundColor").val(s.TitlebarBackgroundColor);
-					$("#TitlebarBackgroundGradientLeft").val(s.TitlebarBackgroundGradientLeft);
-					$("#TitlebarBackgroundGradientRight").val(s.TitlebarBackgroundGradientRight);
-					$("#TitlebarBorderStyle").val(s.TitlebarBorderStyle);
-					$("#TitlebarBorderColor").val(s.TitlebarBorderColor);
-					
+
+					$("#AvatarBorderColor").val(s.AvatarBorderColor);
+					$("#AvatarBorderStyle").val(s.AvatarBorderStyle);
+
 					$("#AvatarImage").val(s.AvatarImage);
 					$("#AvatarOpacity").val(s.AvatarOpacity);
-					$("#AvatarBorderStyle").val(s.AvatarBorderStyle);
-					$("#AvatarBorderColor").val(s.AvatarBorderColor);
-					
-					$("#PostBackgroundOpacity").val(s.PostBackgroundOpacity);
-					$("#PostBackgroundImage").val(s.PostBackgroundImage);
-					$("#PostBackgroundImageRepeat").val(s.PostBackgroundImageRepeat);
-					$("#PostBackgroundImageAttachment").val(s.PostBackgroundImageAttachment);
-					$("#PostBackgroundImagePosition").val(s.PostBackgroundImagePosition);
+
+					$("#PostBackground1Image").val(s.PostBackground1Image);
+					$("#PostBackground1ImageOpacity").val(s.PostBackground1ImageOpacity);
+					$("#PostBackground1ImageRepeat").val(s.PostBackground1ImageRepeat);
+					$("#PostBackground1ImageAttachment").val(s.PostBackground1ImageAttachment);
+					$("#PostBackground1ImagePosition").val(s.PostBackground1ImagePosition);
+
+					$("#PostBackground2Image").val(s.PostBackground2Image);
+					$("#PostBackground2ImageOpacity").val(s.PostBackground2ImageOpacity);
+					$("#PostBackground2ImageRepeat").val(s.PostBackground2ImageRepeat);
+					$("#PostBackground2ImageAttachment").val(s.PostBackground2ImageAttachment);
+					$("#PostBackground2ImagePosition").val(s.PostBackground2ImagePosition);
+
+					$("#PostBackground3Image").val(s.PostBackground3Image);
+					$("#PostBackground3ImageOpacity").val(s.PostBackground3ImageOpacity);
+					$("#PostBackground3ImageRepeat").val(s.PostBackground3ImageRepeat);
+					$("#PostBackground3ImageAttachment").val(s.PostBackground3ImageAttachment);
+					$("#PostBackground3ImagePosition").val(s.PostBackground3ImagePosition);
+
 					$("#PostBackgroundColor").val(s.PostBackgroundColor);
 					$("#PostBackgroundGradientLeft").val(s.PostBackgroundGradientLeft);
 					$("#PostBackgroundGradientRight").val(s.PostBackgroundGradientRight);
+
 					$("#PostFont").val(s.PostFont);
 					$("#PostFontColor").val(s.PostFontColor);
+					$("#PostFontOpacity").val(s.PostFontOpacity);
+
 					$("#PostLinkColor").val(s.PostLinkColor);
-					
+					$("#PostLinkOpacity").val(s.PostLinkOpacity);
+
+					$("#QuoteBackgroundColor").val(s.QuoteBackgroundColor);
+
+					$("#QuoteBorderColor").val(s.QuoteBorderColor);
+
+					$("#QuoteFontColor").val(s.QuoteFontColor);
+
+					$("#TitlebarBackgroundColor").val(s.TitlebarBackgroundColor);
+					$("#TitlebarBackgroundGradientLeft").val(s.TitlebarBackgroundGradientLeft);
+					$("#TitlebarBackgroundGradientRight").val(s.TitlebarBackgroundGradientRight);
+					$("#TitlebarBackgroundImage").val(s.TitlebarBackgroundImage);
+					$("#TitlebarBackgroundOpacity").val(s.TitlebarBackgroundOpacity);
+
+					$("#TitlebarBorderStyle").val(s.TitlebarBorderStyle);
+					$("#TitlebarBorderColor").val(s.TitlebarBorderColor);
+
+					$("#TitlebarGroupText").val(s.TitlebarGroupText);
+					$("#TitlebarGroupTextColor").val(s.TitlebarGroupTextColor);
+					$("#TitlebarGroupTextOpacity").val(s.TitlebarGroupTextOpacity);
+
+					$("#TitlebarMessageText").val(s.TitlebarMessageText);
+					$("#TitlebarMessageTextColor").val(s.TitlebarMessageTextColor);
+					$("#TitlebarMessageTextOpacity").val(s.TitlebarMessageTextOpacity);
+
+					$("#TitlebarMoreOpacity").val(s.TitlebarMoreOpacity);
+
+					$("#TitlebarTitleText").val(s.TitlebarTitleText);
+					$("#TitlebarTitleTextColor").val(s.TitlebarTitleTextColor);
+					$("#TitlebarTitleTextOpacity").val(s.TitlebarTitleTextOpacity);
+
+					$("#TitlebarUsernameText").val(s.TitlebarUsernameText);
+					$("#TitlebarUsernameTextColor").val(s.TitlebarUsernameTextColor);
+					$("#TitlebarUsernameTextOpacity").val(s.TitlebarUsernameTextOpacity);
 				}
 			},
 			null,
