@@ -2,7 +2,7 @@
 // @name			Coup d'Bungie 5 for Firefox
 // @namespace		https://github.com/Shou-/Coup-5
 // @description		Personlize your bungie.net experience
-// @version	 		5.4.1
+// @version	 		5.4.2
 // @include			http*://*bungie.net/*
 // @exclude			http*://*bungie.net/*createpost.aspx*
 // @exclude			http*://*bungie.net/Account/Playtest/*
@@ -285,7 +285,7 @@ var Browser = {
 
 			if(browser === "webkit") return "https://github.com/downloads/Shou-/Coup-5/Coup-5-Chrome.crx";
 			else if(browser === "mozilla") return "https://github.com/Shou-/Coup-5/raw/master/coup-5.user.js";
-			else if(browser === "opera") return ""; // Need link to Opera script here
+			else if(browser === "opera") return "https://github.com/downloads/Shou-/Coup-5/Coup-5-Opera.zip";
 		},
 		Platform:function(){
 			var browser = Browser.Type.Type();
@@ -301,6 +301,7 @@ Browser.XHR.prototype = {
 	_Method:null,
 	_Url:null,
 	_Async:null,
+	_DataType:null,
 	_RequestHeaders:null,
 	_OnLoad:null,
 	_OnError:null,
@@ -310,10 +311,11 @@ Browser.XHR.prototype = {
 	_ResponseHeaders:null,
 	_ResponseText:null,
 
-	_Init:function(method, url, async, headers, onload, onerror, onreadystatechange){
+	_Init:function(method, url, async, datatype, headers, onload, onerror, onreadystatechange){
 		_Method = method;
 		_Url = url;
 		_Async = async;
+		_DataType = datatype;
 		_RequestHeaders = headers;
 		_OnLoad = onload ? onload : function(){};
 		_OnError = onerror ? onerror : function(){};
@@ -366,16 +368,25 @@ Browser.XHR.prototype = {
 		}
 		else if(typeof XMLHttpRequest == "function"){
 		
-			/*$.ajax({
+			$.ajax({
 				url: _Url,
 				type: _Method,
 				async: _Async,
-				crossDomain: true,
+				dataType: _DataType,
 				success: function(data, textStatus, jqXHR){
-					self.__Update(jqXHR.readyState, jqXHR.status, data);
+					var response;
+
+					if(jqXHR != undefined) response = jqXHR;
+					else response = {
+							readyState: 4,
+							responseText: data,
+							status: 200,
+							responseXML: null
+						};
+					self.__Update(response.readyState, response.status, data);
 				}
-			});*/
-			var xhr = new XMLHttpRequest();
+			});
+			/*var xhr = new XMLHttpRequest();
 			xhr.open(_Method, _Url, _Async);
 			xhr.onreadystatechange = function(){
 				self.__Update(this.readyState, this.status, this.responseText);
@@ -385,7 +396,7 @@ Browser.XHR.prototype = {
 					xhr.setRequestHeader(key, _RequestHeaders[key]);
 				}
 			}
-			xhr.send(null);
+			xhr.send(null);*/
 		
 		}
 		else{
@@ -820,7 +831,7 @@ var CoupDBungie = {
 	
 	Debug:false,
 	
-	Version:"5.4.1",
+	Version:"5.4.2",
 	Platform:Browser.Type.Platform(),
 	Author:"dazarobbo",
 	AuthorMemberID:2758679,
@@ -839,7 +850,7 @@ var CoupDBungie = {
 		
 		CreateDefaultXHR:function(path, onload, onerror, onreadystatechange){
 			Console.Log("Creating default XHR object");
-			return new Browser.XHR(this.Method, this.Hosts[0] + this.Path + ((path) ? path : ""), true, null, onload, onerror, onreadystatechange);
+			return new Browser.XHR(this.Method, this.Hosts[0] + this.Path + ((path) ? path : ""), true, "jsonp", null, onload, onerror, onreadystatechange);
 		},
 		Register:function(username, memberID, onload, onerror, onreadystatechange){
 			var path = "Services/Users/Register?";
@@ -889,13 +900,15 @@ var CoupDBungie = {
 				"GET",
 				"http://shou.dyndns-server.com/hak_the_planet/version.json",
 				true,
+				"json",
 				null,
 				function(){
 					var obj = this.GetResponseJSON();
 					if(obj != null){
 						LatestVersion = obj.Version;
+						Reason = obj.Reason;
 						if(LatestVersion > CurrentVersion){
-							var userConfirm = confirm("Your Coup script appears to be outdated, would you like to update?");
+							var userConfirm = confirm("You are using Coup-5 version " + CurrentVersion + ", and an update to version " + LatestVersion + " is available.\nReason: " + Reason + "\n\nWould you like to update?");
 
 							if(userConfirm){
 								window.open(Browser.Type.ScriptUrl(), "_blank");
@@ -3106,14 +3119,13 @@ var MainFunctions = {
 		}
 		
 	}
-
 }
 
 
 function Main(args){
 	if(Client.IsSignedIn() && CoupDBungie.Initialise()){
 		var url = location.href;
-		if(/\/account\/profile\.aspx(#CoupDBungie5)?$/i.test(url)){
+		if(/\/account\/profile\.aspx(\#\S*|\?\S+)?$/i.test(url)){
 			MainFunctions.ClientProfilePage();
 		}
 		//else if(/account\/profile\.aspx?(memberID|userID)=\d+(#CoupDBungie5)?$/i.test(url)){
