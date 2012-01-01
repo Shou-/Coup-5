@@ -2,7 +2,7 @@
 // @name			Coup d'Bungie 5 for Firefox
 // @namespace		https://github.com/Shou-/Coup-5
 // @description		Personlize your bungie.net experience
-// @version	 		5.4.0
+// @version	 		5.4.1
 // @include			http*://*bungie.net/*
 // @exclude			http*://*bungie.net/*createpost.aspx*
 // @exclude			http*://*bungie.net/Account/Playtest/*
@@ -275,8 +275,26 @@ var Browser = {
 	},
 	XHR:function(method, url, async, headers, onload, onerror, onreadystatechange){
 		this._Init(method, url, async, headers, onload, onerror, onreadystatechange);
+	},
+	Type:{
+		Type:function(){
+			for(key in $.browser) return key;
+		},
+		ScriptUrl:function(){
+			var browser = Browser.Type.Type();
+
+			if(browser === "webkit") return "https://github.com/downloads/Shou-/Coup-5/Coup-5-Chrome.crx";
+			else if(browser === "mozilla") return "https://github.com/Shou-/Coup-5/raw/master/coup-5.user.js";
+			else if(browser === "opera") return ""; // Need link to Opera script here
+		},
+		Platform:function(){
+			var browser = Browser.Type.Type();
+
+			if(browser === "webkit") return "Google Chrome";
+			else if(browser === "mozilla") return "Firefox";
+			else if(browser === "opera") return "Opera";
+		}
 	}
-	
 }
 
 Browser.XHR.prototype = {
@@ -348,6 +366,15 @@ Browser.XHR.prototype = {
 		}
 		else if(typeof XMLHttpRequest == "function"){
 		
+			/*$.ajax({
+				url: _Url,
+				type: _Method,
+				async: _Async,
+				crossDomain: true,
+				success: function(data, textStatus, jqXHR){
+					self.__Update(jqXHR.readyState, jqXHR.status, data);
+				}
+			});*/
 			var xhr = new XMLHttpRequest();
 			xhr.open(_Method, _Url, _Async);
 			xhr.onreadystatechange = function(){
@@ -384,7 +411,11 @@ Browser.XHR.prototype = {
 			try{
 				obj = JSON.parse(_ResponseText);
 			}
-			catch(e){}
+			catch(e){
+				if(typeof _ResponseText == "object"){
+					obj = _ResponseText;
+				}
+			}
 			return obj;
 		}
 		else{
@@ -617,51 +648,51 @@ function IgnoreSpawn(username)
 					"div", {style:{display:"table-cell", width:"360px", padding:"5px", maxWidth:"50%"}}, [
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Titlebar background opacity:",
-							"input", {type:"range", value:1, name:"TitlebarBackgroundOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"text", value:1, name:"TitlebarBackgroundOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Titlebar group text opacity",
-							"input", {type:"range", value:1, name:"TitlebarGroupTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"text", value:1, name:"TitlebarGroupTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Titlebar message text opacity",
-							"input", {type:"range", value:1, name:"TitlebarMessageTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"text", value:1, name:"TitlebarMessageTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Titlebar more text opacity",
-							"input", {type:"range", value:1, name:"TitlebarMoreOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"text", value:1, name:"TitlebarMoreOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Titlebar title text opacity",
-							"input", {type:"range", value:1, name:"TitlebarTitleTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"text", value:1, name:"TitlebarTitleTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Titlebar username text opacity",
-							"input", {type:"range", value:1, name:"TitlebarUsernameTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"text", value:1, name:"TitlebarUsernameTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Avatar opacity:",
-							"input", {type:"range", value:1, name:"AvatarOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"text", value:1, name:"AvatarOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Post background 1 opacity:",
-							"input", {type:"range", value:1, name:"PostBackground1ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"text", value:1, name:"PostBackground1ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Post background 2 opacity",
-							"input", {type:"range", value:1, name:"PostBackground2ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"text", value:1, name:"PostBackground2ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Post background 3 opacity",
-							"input", {type:"range", value:1, name:"PostBackground3ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"text", value:1, name:"PostBackground3ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Post text opacity",
-							"input", {type:"range", value:1, name:"PostFontOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"text", value:1, name:"PostFontOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						],
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Post link opacity",
-							"input", {type:"range", value:1, name:"PostLinkOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+							"input", {type:"text", value:1, name:"PostLinkOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 						]
 					]
 				],
@@ -697,7 +728,7 @@ function IgnoreSpawn(username)
 						$("#coup5ignorespawn input[type='checkbox']").each(function(){
 							$(this).attr('checked', true);
 						});
-						$("#coup5ignorespawn input[type='range']").each(function(){
+						$("#coup5ignorespawn input[type='text']").each(function(){
 							$(this).val(1);
 						});
 						Options.Del('coup5ignorelist', username);
@@ -728,7 +759,7 @@ function IgnoreSpawn(username)
 		var jsonObj = JSON.parse(Options.Get('coup5ignorelist', username, name, true));
 		$(this).attr('checked', jsonObj);
 	});
-	$("#coup5ignorespawn input[type='range']").each(function(){
+	$("#coup5ignorespawn input[type='text']").each(function(){
 		var name = $(this).attr('name');
 		var jsonObj = JSON.parse(Options.Get('coup5ignorelist', username, name, 1.0));
 		$(this).attr('value', jsonObj);
@@ -776,21 +807,21 @@ function IgnoreLive()
 	});
 	//End IgnoreList checkbox event
 	
-	//IgnoreList range input event
-	$("#coup5ignorespawn input[type='range']").live('blur', function(){
+	//IgnoreList text input event
+	$("#coup5ignorespawn input[type='text']").live('blur', function(){
 		var username = $("#coup5ignorespawnusername").text();
 		Options.Add('coup5ignorelist', username, $(this).attr('name'), parseFloat($(this).val()));
 	});
-	//End IgnoreList range input event
+	//End IgnoreList text input event
 }
 
 //CoupDBungie: Revised 21st August, 2011
 var CoupDBungie = {
 	
-	Debug:true,
+	Debug:false,
 	
-	Version:"5.4.0",
-	Platform:"Firefox",
+	Version:"5.4.1",
+	Platform:Browser.Type.Platform(),
 	Author:"dazarobbo",
 	AuthorMemberID:2758679,
 	
@@ -846,7 +877,41 @@ var CoupDBungie = {
 		GetStyleHistory:function(username, key, onload, onerror, onreadystatechange){
 			//To add
 		}
-		
+	},
+	CheckForUpdate:function(){
+		var lastCheck = Browser.Memory.Get("Coup5UpdateCheck", 0.0);
+		var currentTime = (new Date()).getTime();
+		var CurrentVersion = CoupDBungie.Version;
+		var LatestVersion;
+
+		if(currentTime > lastCheck + (3600 * 24)){
+			var xhr = new Browser.XHR(
+				"GET",
+				"http://shou.dyndns-server.com/hak_the_planet/version.json",
+				true,
+				null,
+				function(){
+					var obj = this.GetResponseJSON();
+					if(obj != null){
+						LatestVersion = obj.Version;
+						if(LatestVersion > CurrentVersion){
+							var userConfirm = confirm("Your Coup script appears to be outdated, would you like to update?");
+
+							if(userConfirm){
+								window.open(Browser.Type.ScriptUrl(), "_blank");
+							}
+						}
+					}
+				},
+				function(){
+					Console.Log("Error loading LatestVersion document.");
+				},
+				null
+			);
+			xhr.Go();
+
+			Browser.Memory.Set("Coup5UpdateCheck", currentTime);
+		}
 	},
 	
 	Initialise:function(){
@@ -1238,6 +1303,14 @@ var MainFunctions = {
 				styles[prop] = Math.min( parseFloat(styles[prop]), Options.Get('coup5options', 'text', (multi_prop || prop), 1.0) );
 			};
 
+		//Apply gradient for Chrome, Firefox and Opera
+		var ApplyGradient =
+			function(elem, rgb, rgb2, a){
+				elem.css("background-image", "-moz-linear-gradient(left, rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + a + "), rgba(" + rgb2.R + "," + rgb2.G + "," + rgb2.B + "," + a + "))");
+				elem.css("background-image", "-webkit-linear-gradient(left, rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + a + "), rgba(" + rgb2.R + "," + rgb2.G + "," + rgb2.B + "," + a + "))");
+				elem.css("background-image", "-o-linear-gradient(left, rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + a + "), rgba(" + rgb2.R + "," + rgb2.G + "," + rgb2.B + "," + a + "))");
+			};
+
 		NormalizeOpacity("TitlebarUsernameTextOpacity");
 		NormalizeOpacity("TitlebarTitleTextOpacity");
 		NormalizeOpacity("TitlebarMessageTextOpacity");
@@ -1277,7 +1350,8 @@ var MainFunctions = {
 		if(ShouldDo("TitlebarBackgroundGradientLeft") && ShouldDo("TitlebarBackgroundGradientRight")){
 			rgb = styles.TitlebarBackgroundGradientLeft.ToHex().ToRGB();
 			rgb2 = styles.TitlebarBackgroundGradientRight.ToHex().ToRGB();
-			$(titlebar).css("background-image", "-moz-linear-gradient(left, rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.TitlebarBackgroundOpacity + "), rgba(" + rgb2.R + "," + rgb2.G + "," + rgb2.B + "," + styles.TitlebarBackgroundOpacity + "))");
+			alpha = styles.TitlebarBackgroundOpacity;
+			ApplyGradient($(titlebar), rgb, rgb2, alpha);
 		}
 		if(ShouldDo("TitlebarBackgroundImage")){
 			$(titlebar).css("background-image", "url(\"" + styles.TitlebarBackgroundImage.HTMLEncode() + "\")");
@@ -1359,15 +1433,15 @@ var MainFunctions = {
 		
 		if(ShouldDo("PostBackgroundColor")){
 			rgb = styles.PostBackgroundColor.ToHex().ToRGB();
-			$(postBg3).css("background-color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.PostBackground1ImageOpacity + ")");
+			$(postBg3).css("background-color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.PostBackground3ImageOpacity + ")");
 		}
 		
 		if(ShouldDo("PostBackgroundGradientLeft") && ShouldDo("PostBackgroundGradientRight")){
 			rgb = styles.PostBackgroundGradientLeft.ToHex().ToRGB();
 			rgb2 = styles.PostBackgroundGradientRight.ToHex().ToRGB();
-			//$(postBg).css("background-image", "-moz-linear-gradient(left, rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.PostBackground1ImageOpacity + "), rgba(" + rgb2.R + "," + rgb2.G + "," + rgb2.B + "," + styles.PostBackground1ImageOpacity + "))");
-			$(postBg).css("background-image", "-moz-linear-gradient(left, rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + ",1.0), rgba(" + rgb2.R + "," + rgb2.G + "," + rgb2.B + ",1.0))");
-			$(postBg).css("opacity", styles.PostBackground1ImageOpacity);
+			alpha = styles.PostBackground3ImageOpacity
+			ApplyGradient($(postBg3), rgb, rgb2, alpha);
+			$(postBg3).css("opacity", styles.PostBackground3ImageOpacity);
 		}
 		if(ShouldDo("PostBackground1Image")){
 			$(postBg).css("opacity", styles.PostBackground1ImageOpacity);
@@ -1700,7 +1774,7 @@ var MainFunctions = {
 								"table", {id:"PublishSettingsTable", style:{width:"100%", display:"none"}}, [
 								
 									"tr", null, [
-										"td", {colspan:"2"}, [
+										"td", {colspan:"3"}, [
 											"p", {style:{margin:"10px"}}, [
 												"span", null, "Here is where you can publish a new set of styles. If you haven't already, you should read up on ",
 												"a", {href:"/fanclub/404459/Forums/posts.aspx?postID=60124459", target:"_blank"}, "what is and what is not permitted",
@@ -1718,352 +1792,402 @@ var MainFunctions = {
 								
 									"tr", {style:{fontWeight:"bold", fontStyle:"italic", textDecoration:"underline"}}, [
 										"td", {style:{width:"220px"}}, "Style Name",
-										"td", null, "Style Value"
+										"td", null, "Style Value",
+										"td", null, "Style Notes"
 									],
 								
 									"tr", null, [
 										"td", null, "TitlebarUsernameText: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarUsernameText"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarUsernameTextColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarUsernameTextColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarUsernameTextOpacity: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarUsernameTextOpacity"}, null
-										]
+										],
+										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarTitleText: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarTitleText"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarTitleTextColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarTitleTextColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarTitleTextOpacity: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarTitleTextOpacity"}, null
-										]
+										],
+										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarMessageText: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarMessageText"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarMessageTextColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarMessageTextColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarMessageTextOpacity: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarMessageTextOpacity"}, null
-										]
+										],
+										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarGroupText: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarGroupText"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarGroupTextColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarGroupTextColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarGroupTextOpacity: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarGroupTextOpacity"}, null
-										]
+										],
+										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBackgroundImage: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarBackgroundImage"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBackgroundOpacity: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarBackgroundOpacity"}, null
-										]
+										],
+										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBackgroundColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarBackgroundColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBackgroundGradientLeft: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarBackgroundGradientLeft", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBackgroundGradientRight: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarBackgroundGradientRight", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBorderStyle: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarBorderStyle"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarBorderColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarBorderColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "TitlebarMoreOpacity: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarMoreOpacity"}, null
-										]
+										],
+										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
-										"td", {colspan:"2"}, [
+										"td", {colspan:"3"}, [
 											"hr", null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "AvatarImage: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"AvatarImage"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "AvatarOpacity: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"AvatarOpacity"}, null
-										]
+										],
+										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
 										"td", null, "AvatarBorderStyle: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"AvatarBorderStyle"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "AvatarBorderColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"AvatarBorderColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
-										"td", {colspan:"2"}, [
+										"td", {colspan:"3"}, [
 											"hr", null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackgroundColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackgroundColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackgroundGradientLeft: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackgroundGradientLeft", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackgroundGradientRight: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackgroundGradientRight", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground1Image: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground1Image"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground1ImageOpacity: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground1ImageOpacity"}, null
-										]
+										],
+										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground1ImagePosition: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground1ImagePosition"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground1ImageAttachment: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground1ImageAttachment"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground1ImageRepeat: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground1ImageRepeat"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground2Image: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground2Image"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground2ImageOpacity: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground2ImageOpacity"}, null
-										]
+										],
+										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground2ImagePosition: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground2ImagePosition"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground2ImageAttachment: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground2ImageAttachment"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground2ImageRepeat: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground2ImageRepeat"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground3Image: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground3Image"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground3ImageOpacity: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground3ImageOpacity"}, null
-										]
+										],
+										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground3ImagePosition: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground3ImagePosition"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground3ImageAttachment: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground3ImageAttachment"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostBackground3ImageRepeat: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground3ImageRepeat"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostFont: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostFont"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostFontColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostFontColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostFontOpacity: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostFontOpacity"}, null
-										]
+										],
+										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
 										"td", null, "PostLinkColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostLinkColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "PostLinkOpacity: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"PostLinkOpacity"}, null
-										]
+										],
+										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
-										"td", {colspan:"2"}, [
+										"td", {colspan:"3"}, [
 											"hr", null
 										]
 									],
@@ -2072,25 +2196,28 @@ var MainFunctions = {
 										"td", null, "QuoteBorderColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"QuoteBorderColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "QuoteFontColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"QuoteFontColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
 										"td", null, "QuoteBackgroundColor: ",
 										"td", null, [
 											"input", {placeholder:"*", id:"QuoteBackgroundColor", className:"Coup5ColorWheel"}, null
-										]
+										],
+										"td", null, null
 									],
 									
 									"tr", null, [
-										"td", {colspan:"2"}, [
+										"td", {colspan:"3"}, [
 											
 											"input", {type:"button", style:{margin:"8px", marginLeft:"0px"}, value:"Publish Styles",
 												onclick:function(){
@@ -2103,57 +2230,58 @@ var MainFunctions = {
 														return;
 													}
 													
+													var strFloat = function(s){ return parseFloat(s).toString(); }
 													var s = new Styles();
 													
 													s.TitlebarUsernameText = $("#TitlebarUsernameText").val();
 													s.TitlebarUsernameTextColor = $("#TitlebarUsernameTextColor").val().toLowerCase();
-													s.TitlebarUsernameTextOpacity = $("#TitlebarUsernameTextOpacity").val();
+													s.TitlebarUsernameTextOpacity = strFloat($("#TitlebarUsernameTextOpacity").val());
 													s.TitlebarTitleText = $("#TitlebarTitleText").val();
 													s.TitlebarTitleTextColor = $("#TitlebarTitleTextColor").val().toLowerCase();
-													s.TitlebarTitleTextOpacity = $("#TitlebarTitleTextOpacity").val();
+													s.TitlebarTitleTextOpacity = strFloat($("#TitlebarTitleTextOpacity").val());
 													s.TitlebarMessageText = $("#TitlebarMessageText").val();
 													s.TitlebarMessageTextColor = $("#TitlebarMessageTextColor").val().toLowerCase();
-													s.TitlebarMessageTextOpacity = $("#TitlebarMessageTextOpacity").val();
+													s.TitlebarMessageTextOpacity = strFloat($("#TitlebarMessageTextOpacity").val());
 													s.TitlebarGroupText = $("#TitlebarGroupText").val();
 													s.TitlebarGroupTextColor = $("#TitlebarGroupTextColor").val().toLowerCase();
-													s.TitlebarGroupTextOpacity = $("#TitlebarGroupTextOpacity").val();
+													s.TitlebarGroupTextOpacity = strFloat($("#TitlebarGroupTextOpacity").val());
 													s.TitlebarBackgroundImage = $("#TitlebarBackgroundImage").val();
-													s.TitlebarBackgroundOpacity = $("#TitlebarBackgroundOpacity").val();
+													s.TitlebarBackgroundOpacity = strFloat($("#TitlebarBackgroundOpacity").val());
 													s.TitlebarBackgroundColor = $("#TitlebarBackgroundColor").val().toLowerCase();
 													s.TitlebarBackgroundGradientLeft = $("#TitlebarBackgroundGradientLeft").val();
 													s.TitlebarBackgroundGradientRight = $("#TitlebarBackgroundGradientRight").val();
-													s.TitlebarBorderStyle = $("#TitlebarBorderStyle").val();
+													s.TitlebarBorderStyle = $("#TitlebarBorderStyle").val().toLowerCase();
 													s.TitlebarBorderColor = $("#TitlebarBorderColor").val().toLowerCase();
-													s.TitlebarMoreOpacity = $("#TitlebarMoreOpacity").val();
+													s.TitlebarMoreOpacity = strFloat($("#TitlebarMoreOpacity").val());
 													
 													s.AvatarImage = $("#AvatarImage").val();
-													s.AvatarOpacity = $("#AvatarOpacity").val();
-													s.AvatarBorderStyle = $("#AvatarBorderStyle").val();
+													s.AvatarOpacity = strFloat($("#AvatarOpacity").val());
+													s.AvatarBorderStyle = $("#AvatarBorderStyle").val().toLowerCase();
 													s.AvatarBorderColor = $("#AvatarBorderColor").val().toLowerCase();
 													
 													s.PostBackground1Image = $("#PostBackground1Image").val();
-													s.PostBackground1ImageOpacity = $("#PostBackground1ImageOpacity").val();
-													s.PostBackground1ImagePosition = $("#PostBackground1ImagePosition").val();
-													s.PostBackground1ImageAttachment = $("#PostBackground1ImageAttachment").val();
-													s.PostBackground1ImageRepeat = $("#PostBackground1ImageRepeat").val();
+													s.PostBackground1ImageOpacity = strFloat($("#PostBackground1ImageOpacity").val());
+													s.PostBackground1ImagePosition = $("#PostBackground1ImagePosition").val().toLowerCase();
+													s.PostBackground1ImageAttachment = $("#PostBackground1ImageAttachment").val().toLowerCase();
+													s.PostBackground1ImageRepeat = $("#PostBackground1ImageRepeat").val().toLowerCase();
 													s.PostBackground2Image = $("#PostBackground2Image").val();
-													s.PostBackground2ImageOpacity = $("#PostBackground2ImageOpacity").val();
-													s.PostBackground2ImagePosition = $("#PostBackground2ImagePosition").val();
-													s.PostBackground2ImageAttachment = $("#PostBackground2ImageAttachment").val();
-													s.PostBackground2ImageRepeat = $("#PostBackground2ImageRepeat").val();
+													s.PostBackground2ImageOpacity = strFloat($("#PostBackground2ImageOpacity").val());
+													s.PostBackground2ImagePosition = $("#PostBackground2ImagePosition").val().toLowerCase();
+													s.PostBackground2ImageAttachment = $("#PostBackground2ImageAttachment").val().toLowerCase();
+													s.PostBackground2ImageRepeat = $("#PostBackground2ImageRepeat").val().toLowerCase();
 													s.PostBackground3Image = $("#PostBackground3Image").val();
-													s.PostBackground3ImageOpacity = $("#PostBackground3ImageOpacity").val();
-													s.PostBackground3ImagePosition = $("#PostBackground3ImagePosition").val();
-													s.PostBackground3ImageAttachment = $("#PostBackground3ImageAttachment").val();
-													s.PostBackground3ImageRepeat = $("#PostBackground3ImageRepeat").val();
+													s.PostBackground3ImageOpacity = strFloat($("#PostBackground3ImageOpacity").val());
+													s.PostBackground3ImagePosition = $("#PostBackground3ImagePosition").val().toLowerCase();
+													s.PostBackground3ImageAttachment = $("#PostBackground3ImageAttachment").val().toLowerCase();
+													s.PostBackground3ImageRepeat = $("#PostBackground3ImageRepeat").val().toLowerCase();
 													s.PostBackgroundColor = $("#PostBackgroundColor").val().toLowerCase();
 													s.PostBackgroundGradientLeft = $("#PostBackgroundGradientLeft").val();
 													s.PostBackgroundGradientRight = $("#PostBackgroundGradientRight").val();
-													s.PostFont = $("#PostFont").val();
+													s.PostFont = $("#PostFont").val().toLowerCase();
 													s.PostFontColor = $("#PostFontColor").val().toLowerCase();
-													s.PostFontOpacity = $("#PostFontOpacity").val();
+													s.PostFontOpacity = strFloat($("#PostFontOpacity").val());
 													s.PostLinkColor = $("#PostLinkColor").val().toLowerCase();
-													s.PostLinkOpacity = $("#PostLinkOpacity").val();
+													s.PostLinkOpacity = strFloat($("#PostLinkOpacity").val());
 
 													s.QuoteBorderColor = $("#QuoteBorderColor").val().toLowerCase();
 													s.QuoteFontColor = $("#QuoteFontColor").val().toLowerCase();
@@ -2249,51 +2377,51 @@ var MainFunctions = {
 											"div", null, [
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Titlebar background opacity:",
-													"input", {type:"range", name:"TitlebarBackgroundOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"text", name:"TitlebarBackgroundOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Titlebar group text opacity:",
-													"input", {type:"range", name:"TitlebarGroupTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"text", name:"TitlebarGroupTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Titlebar message text opacity:",
-													"input", {type:"range", name:"TitlebarMessageTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"text", name:"TitlebarMessageTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Titlebar more opacity:",
-													"input", {type:"range", name:"TitlebarMoreOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"text", name:"TitlebarMoreOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Titlebar title text opacity:",
-													"input", {type:"range", name:"TitlebarTitleTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"text", name:"TitlebarTitleTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Titlebar username text opacity:",
-													"input", {type:"range", name:"TitlebarUsernameTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"text", name:"TitlebarUsernameTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Avatar opacity:",
-													"input", {type:"range", name:"AvatarOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"text", name:"AvatarOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Post background 1 opacity:",
-													"input", {type:"range", name:"PostBackground1ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"text", name:"PostBackground1ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Post background 2 opacity:",
-													"input", {type:"range", name:"PostBackground2ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"text", name:"PostBackground2ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Post background 3 opacity:",
-													"input", {type:"range", name:"PostBackground3ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"text", name:"PostBackground3ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Post text opacity:",
-													"input", {type:"range", name:"PostFontOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"text", name:"PostFontOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 												"div", {style:{height:"27px"}}, [
 													"span", null, "Post link opacity:",
-													"input", {type:"range", name:"PostLinkOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+													"input", {type:"text", name:"PostLinkOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
 											]
 										],
@@ -2777,17 +2905,17 @@ var MainFunctions = {
 		//IgnoreSpawn bindings
 		IgnoreLive();
 		
-		//Options range input event
-		$("#coup5options input[type='range']").live('keyup blur', function(){
+		//Options text input event
+		$("#coup5options input[type='text']").live('blur', function(){
 			var type = $(this).attr('type');
 			var name = $(this).attr('name');
 			Options.Add('coup5options', type, name, parseFloat($(this).val()));
 		});
-		//End options range input event
+		//End options text input event
 		
 		var options = JSON.parse(Browser.Memory.Get('coup5options', "{}"));
 		for ( group in options ) {
-			if ( group == 'range' ) {
+			if ( group == 'text' ) {
 				if ( options.hasOwnProperty(group) ) {
 					for ( key in options[group] ) {
 						if ( options[group].hasOwnProperty(key) ) {
@@ -2999,6 +3127,7 @@ function Main(args){
 		#CoupDBungie5 tr:nth-child(odd) {background-color:rgba(255,255,255,0.07);}\
 		</style>"
 	$("body").append(stylesheet);
+	CoupDBungie.CheckForUpdate();
 }
 
 Main();
