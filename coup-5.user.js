@@ -14,7 +14,7 @@
 // @contributor		DavidJCobb
 // @require			http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js
 // @require			http://dohpaz.com/flydom/js/jquery.flydom-3.1.1.js
-// @require			http://shou.dyndns-server.com/file/upload/coup5/jquerywheelcolorpickermin.js
+// @require			https://raw.github.com/Shou-/Coup-5/master/jquery.wheelcolorpicker.min.js
 // @license			(CC) Attribution Non-Commercial Share Alike; http://creativecommons.org/licenses/by-nc-sa/3.0/
 // ==/UserScript==
 
@@ -850,7 +850,8 @@ var CoupDBungie = {
 		
 		CreateDefaultXHR:function(path, onload, onerror, onreadystatechange){
 			Console.Log("Creating default XHR object");
-			return new Browser.XHR(this.Method, this.Hosts[0] + this.Path + ((path) ? path : ""), true, "jsonp", null, onload, onerror, onreadystatechange);
+            // The "json" string needs to be replaced with "jsonp" for XHR to work in Opera.
+			return new Browser.XHR(this.Method, this.Hosts[0] + this.Path + ((path) ? path : ""), true, "json", null, onload, onerror, onreadystatechange);
 		},
 		Register:function(username, memberID, onload, onerror, onreadystatechange){
 			var path = "Services/Users/Register?";
@@ -1421,7 +1422,7 @@ var MainFunctions = {
 		if(ShouldDo("AvatarImage")){
 			$(element).find("div.forumavatar img").attr("src", styles.AvatarImage.HTMLEncode());
 		}
-		if(ShouldDo("AvatarBorderStyle") && ShouldDo("AvatarBorderColor")){
+		if(ShouldDo("AvatarBorderStyle") && ShouldDo("AvatarBorderColor") && ocheckbox['AvatarBorder'] != checked && ignoreValueExists('AvatarBorder')){
 			$(element).find("div.forumavatar img").css({width:"88px", height:"88px"}); //MUST be set if border style is set (screws up layout if not)
 			$(element).find("div.forumavatar img").css("border", "1px " + styles.AvatarBorderStyle.HTMLEncode() + " #" + styles.AvatarBorderColor.HTMLEncode()); 
 		}
@@ -2436,15 +2437,6 @@ var MainFunctions = {
 													"span", null, "Post link opacity:",
 													"input", {type:"text", name:"PostLinkOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
 												],
-											]
-										],
-										"fieldset", {style:{border:"1px solid", padding:"5px"}}, [
-											"legend", {style:{margin:"10px"}}, "Misc.",
-											"div", {'class':'coup5miscoptions'}, [
-												"div", {style:{height:"27px"}}, [
-													"span", null,  "GM Storage:",
-													"input", {type:"checkbox", name:"coup5storagetype", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px"}}, null
-												]
 											]
 										]
 									],
