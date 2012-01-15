@@ -846,7 +846,7 @@ var CoupDBungie = {
 	
 	Debug:false,
 	
-	Version:"5.4.2",
+	Version:"5.4.3",
 	Platform:Browser.Type.Platform(),
 	Author:"dazarobbo",
 	AuthorMemberID:2758679,
