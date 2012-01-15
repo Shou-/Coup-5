@@ -2,7 +2,7 @@
 // @name			Coup d'Bungie 5 for Firefox
 // @namespace		https://github.com/Shou-/Coup-5
 // @description		Personlize your bungie.net experience
-// @version	 		5.4.2
+// @version	 		5.4.3
 // @include			http*://*bungie.net/*
 // @exclude			http*://*bungie.net/*createpost.aspx*
 // @exclude			http*://*bungie.net/Account/Playtest/*
@@ -386,17 +386,6 @@ Browser.XHR.prototype = {
 					self.__Update(response.readyState, response.status, data);
 				}
 			});
-			/*var xhr = new XMLHttpRequest();
-			xhr.open(_Method, _Url, _Async);
-			xhr.onreadystatechange = function(){
-				self.__Update(this.readyState, this.status, this.responseText);
-			}
-			for(var key in _RequestHeaders){
-				if(_RequestHeaders.hasOwnProperty(key)){
-					xhr.setRequestHeader(key, _RequestHeaders[key]);
-				}
-			}
-			xhr.send(null);*/
 		
 		}
 		else{
@@ -486,8 +475,7 @@ var Options = {
 }
 
 //IgnoreSpawn: Created 14th October, 2011 (temporary placement)
-function IgnoreSpawn(username)
-{
+function IgnoreSpawn(username){
 	$("#coup5ignorespawn").remove();
 	var elem = $("<div></div>");
 	
@@ -717,21 +705,9 @@ function IgnoreSpawn(username)
 							Options.Add('coup5ignorelist', username, $(this).attr('name'), false);
 							$(this).attr('checked', false);
 						});
-						if(!ignoreList.Contains(username) && $(".removeIgnoreNotice").length < 1) {
-							$("#coup5ignorespawn fieldset > div:last").createAppend(
-								"span", {style:{cssFloat:"right", padding:"3px"}}, [
-									"a", {className:"removeIgnoreNotice", id:"removeIgnoreNotice", href:"javascript:;", onclick:function(){
-										ignoreList.push(username);
-										Client.SetIgnoreList(ignoreList);
-										$("#removeIgnoreNotice").parent().fadeOut();
-										$("#removeIgnoreNotice").parent().remove();
-									}}, "[Completely ignore " + username + "]",
-									"a", {href:"javascript:;", style:{color:"darkRed"}, onclick:function(){
-										$("#removeIgnoreNotice").parent().fadeOut();
-										$("#removeIgnoreNotice").parent().remove();
-									}}, " X"
-								]
-							);
+						if(!ignoreList.Contains(username)) {
+							ignoreList.push(username);
+							Client.SetIgnoreList(ignoreList);
 						}
 					}}, null,
 					"input", {type:"button", value:"Reset options", onclick:function(){
@@ -743,21 +719,9 @@ function IgnoreSpawn(username)
 							$(this).val(1);
 						});
 						Options.Del('coup5ignorelist', username);
-						if(ignoreList.Contains(username) && $(".fullIgnoreNotice").length < 1) {
-							$("#coup5ignorespawn fieldset > div:last").createAppend(
-								"span", {className:"fullIgnoreNotice", style:{cssFloat:"right", padding:"3px"}}, [
-									"a", {id:"fullIgnoreNotice", href:"javascript:;", onclick:function(){
-										ignoreList.splice(ignoreList.indexOf(username), 1);
-										Client.SetIgnoreList(ignoreList);
-										$("#fullIgnoreNotice").parent().fadeOut();
-										$("#fullIgnoreNotice").parent().remove();
-									}}, "[Remove " + username + " from the full ignore as well]",
-									"a", {href:"javascript:;", style:{color:"darkRed"}, onclick:function(){
-										$("#fullIgnoreNotice").parent().fadeOut();
-										$("#fullIgnoreNotice").parent().remove();
-									}}, " X"
-								]
-							);
+						if(ignoreList.Contains(username)) {
+							ignoreList.splice(ignoreList.indexOf(username), 1);
+							Client.SetIgnoreList(ignoreList);
 						}
 					}}
 				]
@@ -777,9 +741,59 @@ function IgnoreSpawn(username)
 	});
 }
 
-//IgnoreLive: Created 16 October, 2011
-function IgnoreLive()
-{
+//ReportSpawn: Created January 13, 2012
+function ReportSpawn(username){
+	$("#coup5reportspawn").remove();
+
+	var elem = $("<div></div>");
+
+	elem.attr({id:"coup5reportspawn", style:"height: 0px; width: 700px; margin: auto;"});
+	elem.createAppend(
+		"div", {style:{marginTop:"10%", position:"fixed", zIndex:9001}}, [
+			"fieldset", {style:{backgroundColor:"rgba(0, 0, 0, 0.9)", border:"1px solid", padding:"5px", width:"700px", maxHeight:"450px"}}, [
+				"legend", {style:{marginLeft:"5px", borderTop:"1px solid", borderLeft:"1px solid", borderRight:"1px solid", backgroundColor:"rgba(0, 0, 0, 0.9)"}}, [
+					"b", null, "Report user: ",
+					"span", {id:'coup5reportspawnusername'}, username
+				],
+				"a", {href:"javascript:;", style:{color:"red", cssFloat:"right"}, onclick:function(){ $(this).parent().parent().remove() }}, "X",
+				"input", {placeholder:"Username", id:"coup5reportusernameinput", style:{display:"block"}}, null,
+				"textarea", {placeholder:"Reason", id:"coup5reportreasoninput", style:{display:"block"}}, null,
+				"input", {value:"Submit", type:"submit", style:{display:"block"}, onclick:function(){
+						var subject = $("#coup5reportusernameinput").val();
+						var reason = $("#coup5reportreasoninput").val();
+
+						if(subject != "" && reason != ""){
+							CoupDBungie.Server.Report(Client.GetUsername(""), Client.GetKey(""), subject, reason,
+								function(){
+									var obj = this.GetResponseJSON();
+									if(obj != null){
+										if(obj.Status === CoupDBungie.Server.Responses.OK){
+											alert("Report was successful");
+										}
+										else{
+											alert("The server said: " + obj.Reason);
+										}
+									}
+									else{
+										alert("JSON parsing failed.\n\nHTTP Status: " + this.GetStatus() + "\n\nBody: " + this.GetResponseText());
+									}
+								},
+								function(){
+									alert("HTTP Error.\n\nHTTP Status: " + this.GetStatus());
+								},
+								null
+							);
+						}
+					}
+				}, null
+			]
+		]
+	);
+	$("body").prepend(elem);
+}
+
+//SignatureLive: Modified January 13, 2012
+function SignatureLive(){
 	//IgnoreSpawn links click event
 	$(".coup5ignorespawn").live('click', function(){
 		var name = $(this).attr('name');
@@ -787,6 +801,14 @@ function IgnoreLive()
 		IgnoreSpawn(name);
 	});
 	//End of IgnoreSpawn links click event
+
+	//ReportSpawn links click event
+	$(".coup5reportspawn").live('click', function(){
+		var name = $(this).attr('name');
+
+		ReportSpawn(name);
+	});
+	//End of ReportSpawn links click event
 	
 	//IgnoreList checkbox event
 	$("#coup5ignorespawn input[type='checkbox']").live('click', function(){
@@ -798,22 +820,15 @@ function IgnoreLive()
 		else{
 			Options.Add('coup5ignorelist', username, $(this).attr('name'), false);
 		}
-		//alert($("#coup5ignorespawn input[type='checkbox']:not(:checked)").length + '/' + $("#coup5ignorespawn input[type='checkbox']").length);
-		if($("#coup5ignorespawn input[type='checkbox']:not(:checked)").length == $("#coup5ignorespawn input[type='checkbox']").length && $(".fullIgnoreNotice").length < 1){
-			$("#coup5ignorespawn fieldset > div:last").createAppend(
-				"span", {className:"fullIgnoreNotice", style:{cssFloat:"right", padding:"3px"}}, [
-					"a", {id:"fullIgnoreNotice", href:"javascript:;", onclick:function(){
-						ignoreList.push(username);
-						Client.SetIgnoreList(ignoreList);
-						$("#fullIgnoreNotice").parent().fadeOut();
-						$("#fullIgnoreNotice").parent().remove();
-					}}, "[Completely ignore " + username + "]",
-					"a", {href:"javascript:;", style:{color:"darkRed"}, onclick:function(){
-						$("#fullIgnoreNotice").parent().fadeOut();
-						$("#fullIgnoreNotice").parent().remove();
-					}}, " X"
-				]
-			);
+		if($("#coup5ignorespawn input[type='checkbox']:not(:checked)").length == $("#coup5ignorespawn input[type='checkbox']").length){
+			ignoreList.push(username);
+			Client.SetIgnoreList(ignoreList);
+		}
+		else{
+			if(ignoreList.Contains(username)) {
+				ignoreList.splice(ignoreList.indexOf(username), 1);
+				Client.SetIgnoreList(ignoreList);
+			}
 		}
 	});
 	//End IgnoreList checkbox event
@@ -853,8 +868,9 @@ var CoupDBungie = {
             // The "json" string needs to be replaced with "jsonp" for XHR to work in Opera.
 			return new Browser.XHR(this.Method, this.Hosts[0] + this.Path + ((path) ? path : ""), true, "json", null, onload, onerror, onreadystatechange);
 		},
-		Register:function(username, memberID, onload, onerror, onreadystatechange){
-			var path = "Services/Users/Register?";
+		Register:function(username, memberID, type, onload, onerror, onreadystatechange){
+			if(!type) var path = "Services/Users/Register?";
+			else var path = "Services/Users/FetchKey?";
 			if(username != null){
 				path += "username=" + User.EncodeUsername(username);
 			}
@@ -870,13 +886,13 @@ var CoupDBungie = {
 			var xhr = this.CreateDefaultXHR(path, onload, onerror, onreadystatechange);
 			Console.Log("Making a Report request to (" + xhr.GetURL() + ")");
 			xhr.Go();
-		},	
+		},
 		GetStyles:function(usernames, onload, onerror, onreadystatechange){
 			var path = "Services/Styles/GetStyles?users=" + User.EncodeUsernameArray(usernames).join(",");
 			var xhr = this.CreateDefaultXHR(path, onload, onerror, onreadystatechange);
 			Console.Log("Making a GetStyles request to (" + xhr.GetURL() + ")");
 			xhr.Go();
-		},	
+		},
 		PublishStyles:function(username, key, styles, onload, onerror, onreadystatechange){
 			var path = "Services/Styles/PublishStyles?username=" + User.EncodeUsername(username) + "&key=" + key + styles.ToPublishString();
 			var xhr = this.CreateDefaultXHR(path, onload, onerror, onreadystatechange);
@@ -1264,10 +1280,37 @@ var Client = {
 		return false;
 	},
 	GetKey:function(defaultVal){
-		return Browser.Memory.Get(this.KEY_NAME, defaultVal);
+		var obj, key;
+		var str = Browser.Memory.Get(this.KEY_NAME, defaultVal);
+
+		try{
+			obj = JSON.parse(str);
+			key = obj[this.GetUsername("")]
+			if(key == undefined) key = defaultVal;
+		}
+		catch(e){
+			var temp = str;
+			key = str;
+			this.SetKey(key);
+		}
+
+		return key;
 	},
 	SetKey:function(keyValue){
-		Browser.Memory.Set(this.KEY_NAME, keyValue);
+		var obj, sobj;
+		var str = Browser.Memory.Get(this.KEY_NAME, "");
+
+		try{
+			obj = JSON.parse(str);
+		}
+		catch(e){
+			obj = {}
+		}
+
+		obj[this.GetUsername("")] = keyValue;
+		sobj = JSON.stringify(obj);
+
+		Browser.Memory.Set(this.KEY_NAME, sobj);
 	},
 	GetIgnoreList:function(defaultVal){
 		var jsonStr = Browser.Memory.Get(this.IGNORE_LIST_NAME, null);
@@ -1351,10 +1394,8 @@ var MainFunctions = {
 		} catch(e) {
 			defaultTitlebarColor = '#27282C';
 		}
-		$(element).find("ul.author_header_block").css({backgroundColor:"transparent", position:"relative"}); 
-		$(element).find("ul.author_header_block").parent().createPrepend("div", {style:{position:"absolute", top:0, left:0, width:"100%", height:"24px"}});
 		//Set titlebar
-		var titlebar = $(element).find("ul.author_header_block").prev();
+		var titlebar = $(element).find("ul.author_header_block");
 		if (ShouldDo("TitlebarBackgroundColor")) {
 			rgb = styles.TitlebarBackgroundColor.ToHex().ToRGB();
 			$(titlebar).css("background-color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.TitlebarBackgroundOpacity + ")");
@@ -1371,8 +1412,9 @@ var MainFunctions = {
 			$(titlebar).css("background-image", "url(\"" + styles.TitlebarBackgroundImage.HTMLEncode() + "\")");
 		}
 		if(ShouldDo("TitlebarBorderColor") && ShouldDo("TitlebarBorderStyle") && ocheckbox['TitlebarBorder'] != checked && ignoreValueExists('TitlebarBorder')){
-			$(titlebar).css("border", "1px solid #" + styles.TitlebarBorderColor.HTMLEncode());
+			$(titlebar).css("border-color", "#" + styles.TitlebarBorderColor.HTMLEncode());
 			$(titlebar).css("border-style", styles.TitlebarBorderStyle.HTMLEncode());
+			$(titlebar).css("border-width", "1px");
 		}
 
 		//Set more text
@@ -1604,7 +1646,7 @@ var MainFunctions = {
 	ClientProfilePage:function(){
 		
 		$("#ctl00_mainContent_profilePanel").createAppend(
-			"div", {className:"boxD_outer", id:"CoupDBungie5", style:{width:"100%", marginTop:"-10px"}}, [
+			"div", {className:"boxD_outer", id:"CoupDBungie5", style:{width:"100%", marginTop:"-10px", marginBottom:"37px"}}, [
 				"div", {className:"boxD_inner"}, [
 					"div", {className:"boxD", style:{width:"100%"}}, [
 						
@@ -1613,17 +1655,86 @@ var MainFunctions = {
 							"a", {href:"?memberID=" + CoupDBungie.AuthorMemberID}, CoupDBungie.Author.HTMLEncode(),
 							"span", null, ")"
 						],
-						
+
+						"div", {class:"RadTabStrip RadTabStrip_Default"}, [
+							"div", {class:"rtsLevel rtsLevel2", style:{cssFloat:"none", width:"inherit"}}, [
+								"ul", {class:"rtsUL"}, [
+									"li", {class:"rtsLI"}, [
+										"a", {href:"javascript:;", class:"coup5settingslink rtsLink rtsSelected", onclick:function(){
+												$(".coup5s").hide();
+												$("#coup5spublish").show();
+												$(".coup5settingslink").removeClass("rtsSelected");
+												$(this).addClass("rtsSelected");
+												location.href = "#CoupDBungie5";
+											}
+										}, [
+											"span", {class:"rtsOut"}, [
+												"span", {class:"rtsIn"}, [
+													"span", {class:"rtsTxt"}, "Publish Styles"
+												]
+											]
+										]
+									],
+
+									"li", {class:"rtsLI"}, [
+										"a", {href:"javascript:;", class:"coup5settingslink rtsLink", onclick:function(){
+												$(".coup5s").hide();
+												$("#coup5soptions").show();
+												$(".coup5settingslink").removeClass("rtsSelected");
+												$(this).addClass("rtsSelected");
+												location.href = "#CoupDBungie5";
+											}
+										}, [
+											"span", {class:"rtsOut"}, [
+												"span", {class:"rtsIn"}, [
+													"span", {class:"rtsTxt"}, "Options"
+												]
+											]
+										]
+									],
+
+									"li", {class:"rtsLI"}, [
+										"a", {href:"javascript:;", class:"coup5settingslink rtsLink", onclick:function(){
+												$(".coup5s").hide();
+												$("#coup5scache").show();
+												$(".coup5settingslink").removeClass("rtsSelected");
+												$(this).addClass("rtsSelected");
+												location.href = "#CoupDBungie5";
+											}
+										}, [
+											"span", {class:"rtsOut"}, [
+												"span", {class:"rtsIn"}, [
+													"span", {class:"rtsTxt"}, "Cache"
+												]
+											]
+										]
+									],
+
+									"li", {class:"rtsLI"}, [
+										"a", {href:"javascript:;", class:"coup5settingslink rtsLink", onclick:function(){
+												$(".coup5s").hide();
+												$("#coup5sreport").show();
+												$(".coup5settingslink").removeClass("rtsSelected");
+												$(this).addClass("rtsSelected");
+												location.href = "#CoupDBungie5";
+											}
+										}, [
+											"span", {class:"rtsOut"}, [
+												"span", {class:"rtsIn"}, [
+													"span", {class:"rtsTxt"}, "Report user"
+												]
+											]
+										]
+									]
+								]
+							]
+						],
+
 						//Profile section
-						"div", {style:{margin:"5px"}}, [
+						"div", {style:{margin:"5px"}, id:"coup5sprofile"}, [
 							"fieldset", {style:{border:"1px solid", padding:"5px"}}, [
-								"legend", {style:{marginLeft:"5px"}}, [
-									"a", {href:"javascript:;", onclick:function(){
-										$(this).parent().next().toggle();
-										window.scrollTo(0, 700);
-									}}, "Profile"
-								],
-								"table", {style:{width:"100%", display:"none"}}, [
+								"legend", {style:{marginLeft:"5px"}}, "Profile",
+								"table", {style:{width:"100%"}}, [
 								
 									"tr", null, [
 										"td", {colspan:"2"}, [
@@ -1636,7 +1747,7 @@ var MainFunctions = {
 												"br", null, null,
 												"br", null, null,
 												"div", null, [
-													"span", null, "Having issues registering? ",
+													"span", null, "Having issues? ",
 													"a", {href:"http://www.bungie.net/fanclub/308401/Forums/posts.aspx?postID=68482978"}, "Read this thread.",
 													"span", null, " Still having issues? Post your issue in the Coup group, with error messages if any."
 												]
@@ -1668,7 +1779,7 @@ var MainFunctions = {
 																Client.SetKey(newkey);
 																$(this).siblings("input").val(newkey);
 																alert("Key saved successfully");
-															}		
+															}
 															else{
 																alert("Key is not valid. It should only contain numbers and letters, and be 64 characters long.");
 															}
@@ -1686,14 +1797,13 @@ var MainFunctions = {
 										"td", null, [
 											"input", {type:"button", value:"Register",
 												onclick:function(){
-												
+													var registrationType = 0; //Regular registration, not FetchKey.
 													if(Client.GetKey(null) != null){
 														if(!confirm("It appears you already have a key stored. Do you want to begin the registration process anyway?")){
 															return;
 														}
 													}
 													
-													alert("The Coup d'Bungie 5 registration process will now begin.");
 													alert(
 														"Please note:\n\n" +
 														"- Make sure you've read the article \"FAQ on Registration\" if you're not sure about anything\n" +
@@ -1704,8 +1814,9 @@ var MainFunctions = {
 														"- If you have any problems, don't hesitate to ask!"
 													);
 													
-													if(!confirm("If your username is " + Client.GetUsername("") + ", click OK to continue")){
-														return;
+													if(!confirm("Your username is " + Client.GetUsername("") + ".\n" +
+																"If you have lost your key press cancel, otherwise press OK.")){
+														registrationType = 1; //FetchKey registration
 													}
 													
 													if(confirm("Click OK if you have already received a Validation String from this process, otherwise click cancel (you should probably click cancel if you haven't done this before)")){
@@ -1716,7 +1827,7 @@ var MainFunctions = {
 														}
 														while(!/^[0-9]+$/g.test(memberID));
 														
-														CoupDBungie.Server.Register(null, memberID,
+														CoupDBungie.Server.Register(null, memberID, registrationType,
 															function(){
 																var obj = this.GetResponseJSON();
 																if(obj != null){
@@ -1741,7 +1852,7 @@ var MainFunctions = {
 													}
 													else{
 											
-														CoupDBungie.Server.Register(Client.GetUsername(""), null,
+														CoupDBungie.Server.Register(Client.GetUsername(""), null, registrationType,
 															function(){
 																var obj = this.GetResponseJSON();
 																if(obj != null){
@@ -1777,15 +1888,10 @@ var MainFunctions = {
 						//End Profile section
 						
 						//Start Publish Styles section
-						"div", {style:{margin:"5px"}}, [
+						"div", {style:{margin:"5px"}, id:"coup5spublish", class:"coup5s"}, [
 							"fieldset", {style:{border:"1px solid", padding:"5px"}}, [
-								"legend", {style:{marginLeft:"5px"}}, [
-									"a", {href:"javascript:;", onclick:function(){
-										$(this).parent().next().toggle();
-										window.scrollTo(0,700);
-									}}, "Publish Styles"
-								],
-								"table", {id:"PublishSettingsTable", style:{width:"100%", display:"none"}}, [
+								"legend", {style:{marginLeft:"5px"}}, "Publish Styles",
+								"table", {id:"PublishSettingsTable", style:{width:"100%"}}, [
 								
 									"tr", null, [
 										"td", {colspan:"3"}, [
@@ -1794,12 +1900,6 @@ var MainFunctions = {
 												"a", {href:"/fanclub/404459/Forums/posts.aspx?postID=60124459", target:"_blank"}, "what is and what is not permitted",
 												"span", null, " to be published, as well as the restrictions. If you feel that they are too restrictive, or just want to suggest an idea or feature, please make a topic about it in the ",
 												"a", {href:"/fanclub/coup5/Group/GroupHome.aspx", target:"_blank"}, "Coup d'Bungie 5 forum",
-												"br", null, null,
-												"br", null, null,
-												"div", null, [
-													"span", null, "Having issues with publishing? ",
-													"a", {href:"http://www.bungie.net/fanclub/308401/Forums/posts.aspx?postID=68482978"}, "Read this thread. "
-												]
 											]
 										]
 									],
@@ -1831,7 +1931,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarUsernameTextOpacity"}, null
 										],
-										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
+										"td", null, "Number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
@@ -1855,7 +1955,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarTitleTextOpacity"}, null
 										],
-										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
+										"td", null, "Number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
@@ -1879,7 +1979,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarMessageTextOpacity"}, null
 										],
-										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
+										"td", null, "Number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
@@ -1903,7 +2003,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarGroupTextOpacity"}, null
 										],
-										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
+										"td", null, "Number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
@@ -1919,7 +2019,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarBackgroundOpacity"}, null
 										],
-										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
+										"td", null, "Number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
@@ -1951,7 +2051,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarBorderStyle"}, null
 										],
-										"td", null, null
+										"td", null, "Dotted, dashed, solid, double, groove, ridge, inset, outset"
 									],
 									
 									"tr", null, [
@@ -1967,7 +2067,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"TitlebarMoreOpacity"}, null
 										],
-										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
+										"td", null, "Number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
@@ -1990,7 +2090,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"AvatarOpacity"}, null
 										],
-										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
+										"td", null, "Number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
@@ -1998,7 +2098,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"AvatarBorderStyle"}, null
 										],
-										"td", null, null
+										"td", null, "Dotted, dashed, solid, double, groove, ridge, inset, outset"
 									],
 									
 									"tr", null, [
@@ -2053,7 +2153,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground1ImageOpacity"}, null
 										],
-										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
+										"td", null, "Number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
@@ -2061,7 +2161,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground1ImagePosition"}, null
 										],
-										"td", null, null
+										"td", null, "Left, right, or center followed by a space, followed by top, center, or bottom. Ex: \"center top\"."
 									],
 									
 									"tr", null, [
@@ -2069,7 +2169,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground1ImageAttachment"}, null
 										],
-										"td", null, null
+										"td", null, "Scroll, fixed"
 									],
 									
 									"tr", null, [
@@ -2077,7 +2177,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground1ImageRepeat"}, null
 										],
-										"td", null, null
+										"td", null, "No-repeat, repeat, repeat-y, repeat-x"
 									],
 									
 									"tr", null, [
@@ -2093,7 +2193,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground2ImageOpacity"}, null
 										],
-										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
+										"td", null, "Number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
@@ -2101,7 +2201,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground2ImagePosition"}, null
 										],
-										"td", null, null
+										"td", null, "Left, right, or center followed by a space, followed by top, center, or bottom. Ex: \"center top\"."
 									],
 									
 									"tr", null, [
@@ -2109,7 +2209,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground2ImageAttachment"}, null
 										],
-										"td", null, null
+										"td", null, "Scroll, fixed"
 									],
 									
 									"tr", null, [
@@ -2117,7 +2217,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground2ImageRepeat"}, null
 										],
-										"td", null, null
+										"td", null, "No-repeat, repeat, repeat-y, repeat-x"
 									],
 									
 									"tr", null, [
@@ -2133,7 +2233,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground3ImageOpacity"}, null
 										],
-										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
+										"td", null, "Number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
@@ -2141,7 +2241,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground3ImagePosition"}, null
 										],
-										"td", null, null
+										"td", null, "Left, right, or center followed by a space, followed by top, center, or bottom. Ex: \"center top\"."
 									],
 									
 									"tr", null, [
@@ -2149,7 +2249,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground3ImageAttachment"}, null
 										],
-										"td", null, null
+										"td", null, "Scroll, fixed"
 									],
 									
 									"tr", null, [
@@ -2157,7 +2257,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostBackground3ImageRepeat"}, null
 										],
-										"td", null, null
+										"td", null, "No-repeat, repeat, repeat-y, repeat-x"
 									],
 									
 									"tr", null, [
@@ -2165,7 +2265,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostFont"}, null
 										],
-										"td", null, null
+										"td", null, "Arial, helvetica, times new roman, courier, verdana, tahoma, comic sans ms, impact, georgia, palatino"
 									],
 									
 									"tr", null, [
@@ -2181,7 +2281,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostFontOpacity"}, null
 										],
-										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
+										"td", null, "Number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
@@ -2197,7 +2297,7 @@ var MainFunctions = {
 										"td", null, [
 											"input", {placeholder:"*", id:"PostLinkOpacity"}, null
 										],
-										"td", null, "Must be a number between 0.0 - 1.0. Ex: 0.5"
+										"td", null, "Number between 0.0 - 1.0. Ex: 0.5"
 									],
 									
 									"tr", null, [
@@ -2306,7 +2406,13 @@ var MainFunctions = {
 															var obj = this.GetResponseJSON();
 															if(obj != null){
 																if(obj.Status === CoupDBungie.Server.Responses.OK){
-																	alert("Your styles were published successfully and will show up at the next caching interval (approx. every " + Cache.CACHE_INTERVAL_RATE + " mins on the hour).");
+																	alert("Your styles were published successfully.");
+																	var page = Cache.Get(Client.GetUsername(""));
+
+																	if(page != null){
+																		Cache.Delete(page);
+																		Cache.Save();
+																	}
 																}
 																else{
 																	alert("The server said: " + obj.Reason);
@@ -2334,18 +2440,14 @@ var MainFunctions = {
 						//End Publish Styles section
 						
 						//Options and ignore list section
-						"div", {style:{margin:"5px"}}, [
+						"div", {style:{margin:"5px", display:"none"}, id:"coup5soptions", class:"coup5s"}, [
 							"fieldset", {style:{border:"1px solid", padding:"5px"}}, [
-								"legend", {style:{marginLeft:"5px"}}, [
-									"a", {href:"javascript:;", onclick:function(){
-										$(this).parent().next().toggle();
-										window.scrollTo(0,700);
-									}}, "Options"
-								],
-								"div", {style:{margin:"10px", display:"none"}, id:"coup5options"}, [
+								"legend", {style:{marginLeft:"5px"}}, "Options",
+								"div", {style:{margin:"10px"}}, [
 									"div", {style:{display:"table-cell", maxWidth:"50%", width:"414px"}}, [
 										"fieldset", {style:{border:"1px solid", padding:"5px"}}, [
 											"legend", {style:{margin:"10px"}}, "User ignore",
+											"p", {style:{marginBottom:"10px"}}, "Gray names only have certain parts ignored, while black ones are fully ignored.",
 											"div", {style:{margin:"10px"}}, [
 												"select", {id:"IgnoreList", style:{width:"200px"}, size:5}, null
 											],
@@ -2358,15 +2460,16 @@ var MainFunctions = {
 													}
 												}}, null,
 												"input", {type:"button", value:"Remove", onclick:function(){
-													if($("#IgnoreList option:selected").is('[style]')) {
-														$("#IgnoreList option:selected").attr('style', 'color:gray;');
-													} else {
-														$("#IgnoreList option:selected").remove();
-													}
+													var username = $("#IgnoreList option:selected").val();
 													var usernames = [];
+
+													Options.Del('coup5ignorelist', username);
+
+													$("#IgnoreList option:selected").remove();
 													$("#IgnoreList option").each(function(){
 														usernames.Add($(this).val());
 													});
+
 													Client.SetIgnoreList(usernames);
 												}}, null,
 												"input", {type:"button", value:"Edit", onclick:function(){
@@ -2389,53 +2492,79 @@ var MainFunctions = {
 										"fieldset", {style:{border:"1px solid", padding:"5px"}}, [
 											"legend", {style:{margin:"10px"}}, "Global maximum opacity",
 											"div", null, [
-												"div", {style:{height:"27px"}}, [
-													"span", null, "Titlebar background opacity:",
-													"input", {type:"text", name:"TitlebarBackgroundOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-												],
-												"div", {style:{height:"27px"}}, [
-													"span", null, "Titlebar group text opacity:",
-													"input", {type:"text", name:"TitlebarGroupTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-												],
-												"div", {style:{height:"27px"}}, [
-													"span", null, "Titlebar message text opacity:",
-													"input", {type:"text", name:"TitlebarMessageTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-												],
-												"div", {style:{height:"27px"}}, [
-													"span", null, "Titlebar more opacity:",
-													"input", {type:"text", name:"TitlebarMoreOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-												],
-												"div", {style:{height:"27px"}}, [
-													"span", null, "Titlebar title text opacity:",
-													"input", {type:"text", name:"TitlebarTitleTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-												],
-												"div", {style:{height:"27px"}}, [
-													"span", null, "Titlebar username text opacity:",
-													"input", {type:"text", name:"TitlebarUsernameTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-												],
-												"div", {style:{height:"27px"}}, [
-													"span", null, "Avatar opacity:",
-													"input", {type:"text", name:"AvatarOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-												],
-												"div", {style:{height:"27px"}}, [
-													"span", null, "Post background 1 opacity:",
-													"input", {type:"text", name:"PostBackground1ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-												],
-												"div", {style:{height:"27px"}}, [
-													"span", null, "Post background 2 opacity:",
-													"input", {type:"text", name:"PostBackground2ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-												],
-												"div", {style:{height:"27px"}}, [
-													"span", null, "Post background 3 opacity:",
-													"input", {type:"text", name:"PostBackground3ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-												],
-												"div", {style:{height:"27px"}}, [
-													"span", null, "Post text opacity:",
-													"input", {type:"text", name:"PostFontOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-												],
-												"div", {style:{height:"27px"}}, [
-													"span", null, "Post link opacity:",
-													"input", {type:"text", name:"PostLinkOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+												"table", {style:{width:"100%"}}, [
+													"tr", {style:{height:"27px"}}, [
+														"td", null, "Titlebar background opacity:",
+														"td", null, [
+															"input", {type:"text", name:"TitlebarBackgroundOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+														]
+													],
+													"tr", {style:{height:"27px"}}, [
+														"td", null, "Titlebar group text opacity:",
+														"td", null, [
+															"input", {type:"text", name:"TitlebarGroupTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+														]
+													],
+													"tr", {style:{height:"27px"}}, [
+														"td", null, "Titlebar message text opacity:",
+														"td", null, [
+															"input", {type:"text", name:"TitlebarMessageTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+														]
+													],
+													"tr", {style:{height:"27px"}}, [
+														"td", null, "Titlebar more opacity:",
+														"td", null, [
+															"input", {type:"text", name:"TitlebarMoreOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+														]
+													],
+													"tr", {style:{height:"27px"}}, [
+														"td", null, "Titlebar title text opacity:",
+														"td", null, [
+															"input", {type:"text", name:"TitlebarTitleTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+														]
+													],
+													"tr", {style:{height:"27px"}}, [
+														"td", null, "Titlebar username text opacity:",
+														"td", null, [
+															"input", {type:"text", name:"TitlebarUsernameTextOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+														]
+													],
+													"tr", {style:{height:"27px"}}, [
+														"td", null, "Avatar opacity:",
+														"td", null, [
+															"input", {type:"text", name:"AvatarOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+														]
+													],
+													"tr", {style:{height:"27px"}}, [
+														"td", null, "Post background 1 opacity:",
+														"td", null, [
+															"input", {type:"text", name:"PostBackground1ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+														]
+													],
+													"tr", {style:{height:"27px"}}, [
+														"td", null, "Post background 2 opacity:",
+														"td", null, [
+															"input", {type:"text", name:"PostBackground2ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+														]
+													],
+													"tr", {style:{height:"27px"}}, [
+														"td", null, "Post background 3 opacity:",
+														"td", null, [
+															"input", {type:"text", name:"PostBackground3ImageOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+														]
+													],
+													"tr", {style:{height:"27px"}}, [
+														"td", null, "Post text opacity:",
+														"td", null, [
+															"input", {type:"text", name:"PostFontOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+														]
+													],
+													"tr", {style:{height:"27px"}}, [
+														"td", null, "Post link opacity:",
+														"td", null, [
+															"input", {type:"text", name:"PostLinkOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
+														]
+													]
 												],
 											]
 										]
@@ -2597,7 +2726,7 @@ var MainFunctions = {
 											]
 										]
 									],
-									"div", null, [
+									"div", {style:{marginTop:"10px"}}, [
 									"input", {type:"button", value:"Saved automatically", disabled:"disabled"}, null,
 									"input", {type:"button", value:"Reset options", onclick:function(){
 										if(confirm("Are you sure you want to reset all options?")){
@@ -2611,15 +2740,10 @@ var MainFunctions = {
 						//End Ignore list section
 						
 						//Cache
-						"div", {style:{margin:"5px"}}, [
+						"div", {style:{margin:"5px", display:"none"}, id:"coup5scache", class:"coup5s"}, [
 							"fieldset", {style:{border:"1px solid", padding:"5px"}}, [
-								"legend", {style:{marginLeft:"5px"}}, [
-									"a", {href:"javascript:;", onclick:function(){
-										$(this).parent().next().toggle();
-										window.scrollTo(0,700);
-									}}, "Cache"
-								],
-								"div", {style:{height:"700px", display:"none", overflow:"auto"}}, [
+								"legend", {style:{marginLeft:"5px"}}, "Cache",
+								"div", {style:{height:"700px", overflow:"auto"}}, [
 									"table", {id:"CoupCacheTable", style:{width:"100%"}}, [
 										
 										"tr", null, [
@@ -2655,15 +2779,10 @@ var MainFunctions = {
 						//End Cache section
 						
 						//Start report section
-						"div", {style:{margin:"5px"}}, [
+						"div", {style:{margin:"5px", display:"none"}, id:"coup5sreport", class:"coup5s"}, [
 							"fieldset", {style:{border:"1px solid", padding:"5px"}}, [
-								"legend", {style:{marginLeft:"5px"}}, [
-									"a", {href:"javascript:;", onclick:function(){
-										$(this).parent().next().toggle();
-										window.scrollTo(0,700);
-									}}, "Report"
-								],
-								"table", {style:{width:"100%", display:"none"}}, [
+								"legend", {style:{marginLeft:"5px"}}, "Report",
+								"table", {style:{width:"100%"}}, [
 									"tr", null, [
 										"td", {colspan:"2"}, [
 											"p", {style:{margin:"10px"}}, "You can use the form below to submit a report about another user's Coup d'Bungie 5 styles. Type in the username of a user you believe has posted inappropriate content, and optionally provide a reason for the report."
@@ -2908,7 +3027,7 @@ var MainFunctions = {
 		//
 		
 		//IgnoreSpawn bindings
-		IgnoreLive();
+		SignatureLive();
 		
 		//Options text input event
 		$("#coup5options input[type='text']").live('blur', function(){
@@ -3029,8 +3148,8 @@ var MainFunctions = {
 		var usernames = [];
 		var users = [];
 		
-		//IgnoreSpawn bindings
-		IgnoreLive();
+		//IgnoreSpawn and ReportSpawn bindings
+		SignatureLive();
 		
 		function ApplyStyles(){
 			forumItems.find("div.forumpost:has(li.login > a)").each(function(){
@@ -3042,10 +3161,14 @@ var MainFunctions = {
 				);
 				//End Permalinks
 				//Ignore link
+				var username = $(this).find("li.login > a").text();
+
 				$(this).find("ul.leftside").createAppend(
 					"li", null, [
 						"span", null, "coup 5:&nbsp;",
-						"a", {href:"javascript:;", 'class':'coup5ignorespawn', name:$(this).find("li.login > a").text()}, "Ignore " + $(this).find("li.login > a").text()
+						"a", {href:"javascript:;", class:"coup5ignorespawn", name:username}, "Ignore " + username,
+						"span", null, "&nbsp;|&nbsp;",
+						"a", {href:"javascript:;", class:"coup5reportspawn", name:username}, "Report " + username
 					]
 				);
 				//End ignore link
@@ -3117,7 +3240,7 @@ var MainFunctions = {
 function Main(args){
 	if(Client.IsSignedIn() && CoupDBungie.Initialise()){
 		var url = location.href;
-		if(/\/account\/profile\.aspx(\#\S*|\?\S+)?$/i.test(url)){
+		if(/\/account\/profile\.aspx(\#\S*)?$/i.test(url)){
 			MainFunctions.ClientProfilePage();
 		}
 		//else if(/account\/profile\.aspx?(memberID|userID)=\d+(#CoupDBungie5)?$/i.test(url)){
