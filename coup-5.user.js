@@ -854,7 +854,7 @@ var CoupDBungie = {
 	Server:{
 		
 		Hosts:[
-			"http://coup-srv-01.comeze.com/",
+			"http://coup-srv-01.heliohost.org/",
 		],
 		Path:"API/",
 		Method:"GET",
