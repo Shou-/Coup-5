@@ -12,7 +12,7 @@
 // @contributor		Iggyhopper
 // @contributor		Tidus Zero
 // @contributor		DavidJCobb
-// @require			http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js
+// @require			http://code.jquery.com/jquery-1.8.1.min.js
 // @require			http://dohpaz.com/flydom/js/jquery.flydom-3.1.1.js
 // @require			https://raw.github.com/Shou-/Coup-5/master/jquery.wheelcolorpicker.min.js
 // @license			(CC) Attribution Non-Commercial Share Alike; http://creativecommons.org/licenses/by-nc-sa/3.0/
