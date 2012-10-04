@@ -22,10 +22,6 @@
 // :set noexpandtab
 
 // TODO:
-// - Style saving.
-//   Saved coups appear as the preview and are positioned below the style inputs.
-//   They can be clicked directly to change.
-//   Check for changes to avoid annoyances?
 
 // FIXME:
 // - Possible ignore list error?
@@ -37,7 +33,7 @@ var Console = {
 			try{
 				GM_log(a);
 			} catch(e) {
-				unsafeWindow.console.log(a);
+				console.log(a);
 			}
 		}
 	}
@@ -868,7 +864,7 @@ var CoupDBungie = {
 	
 	Debug:true,
 	
-	Version:"5.4.3",
+	Version:"5.5",
 	Platform:Browser.Type.Platform(),
 	Author:"dazarobbo",
 	AuthorMemberID:2758679,
