@@ -2591,6 +2591,11 @@ var MainFunctions = {
 														Options.Add("coup5styles", Client.GetUsername(), name, s);
 														if (document.getElementById("c5style_" + name)){
 															var elem = "#c5style_" + name;
+															$(elem).find(".forum_item:first").remove();
+															MainFunctions.GenerateStylePreview(s, elem, _noStyling=true);
+															var e = $(elem).find(".forum_item:first");
+															e.remove();
+															$(elem).find('h1').after(e);
 															MainFunctions.ApplyStylesToElement(s, $(elem).find(".forumpost:first"), preview_=false);
 														}
 														else {
@@ -2605,16 +2610,21 @@ var MainFunctions = {
 															);
 															$(elem).createAppend(
 																"div", null, [
-																	"input", {type:"button", value:"Load Style",
+																	"input", {type:"button", value:"Load Style", name:name,
 																		onclick:function(){
+																			var n = $(this).attr("name");
+																			var s = Options.Get("coup5styles", Client.GetUsername(), n);
 																			MainFunctions.InsertCoupStyles(s);
+																			$("#c5preview").find(".forum_item:first").remove();
+																			MainFunctions.GenerateStylePreview(s, "#c5preview", _noStyling=true);
 																			MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
 																		}
 																	}, null,
-																	"input", {type:"button", value:"Delete Style",
+																	"input", {type:"button", value:"Delete Style", name:name,
 																		onclick:function(){
-																			Options.Del("coup5styles", Client.GetUsername(), name);
-																			$("#c5style_" + name).remove();
+																			var n = $(this).attr("name");
+																			Options.Del("coup5styles", Client.GetUsername(), n);
+																			$("#c5style_" + n).remove();
 																		}
 																	}, null
 																],
@@ -3047,29 +3057,34 @@ var MainFunctions = {
 
 		// Saved styles
 		var savedStyles = Options.See("coup5styles", Client.GetUsername());
-		for (name in savedStyles) {
-			var elem = "#c5style_" + name;
-			var s = savedStyles[name];
+		for (styleName in savedStyles) {
+			var elem = "#c5style_" + styleName;
+			var s = savedStyles[styleName];
 			$("#SavedStyles").createAppend(
-				"div", {id:"c5style_" + name, className:"c5style", style:"margin-bottom: 20px; padding-bottom:5px;"}, null
+				"div", {id:"c5style_" + styleName, className:"c5style", style:"margin-bottom: 20px; padding-bottom:5px;"}, null
 			);
 			MainFunctions.GenerateStylePreview(s, elem, _noStyling=true);
 			MainFunctions.ApplyStylesToElement(s, $(elem).find(".forumpost:first"), preview_=false);
 			$(elem).createPrepend(
-				"h1", {style:"padding: 5px;"}, name
+				"h1", {style:"padding: 5px;"}, styleName
 			);
 			$(elem).createAppend(
 				"div", null, [
-					"input", {type:"button", value:"Load Style",
+					"input", {type:"button", value:"Load Style", name:styleName,
 						onclick:function(){
+							var n = $(this).attr("name");
+							var s = Options.Get("coup5styles", Client.GetUsername(), n);
 							MainFunctions.InsertCoupStyles(s);
+							$("#c5preview").find(".forum_item:first").remove();
+							MainFunctions.GenerateStylePreview(s, "#c5preview", _noStyling=true);
 							MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
 						}
 					}, null,
-					"input", {type:"button", value:"Delete Style",
+					"input", {type:"button", value:"Delete Style", name:styleName,
 						onclick:function(){
-							Options.Del("coup5styles", Client.GetUsername(), name);
-							$("#c5style_" + name).remove();
+							var n = $(this).attr("name");
+							Options.Del("coup5styles", Client.GetUsename(), n);
+							$("#c5style_" + n).remove();
 						}
 					}, null
 				],
@@ -3158,6 +3173,8 @@ var MainFunctions = {
 			s.TitlebarUsernameTextColor = $("#TitlebarUsernameTextColor").val();
 			s.TitlebarUsernameTextOpacity = $("#TitlebarUsernameTextOpacity").val()
 			
+			$("#c5preview").find(".forum_item:first").remove();
+			MainFunctions.GenerateStylePreview(s, "#c5preview", _noStyling=true);
 			MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
 		});
 		$("#PublishSettingsTable input:text").bind("blur", function(){
@@ -3231,6 +3248,8 @@ var MainFunctions = {
 			s.TitlebarUsernameTextColor = $("#TitlebarUsernameTextColor").val();
 			s.TitlebarUsernameTextOpacity = $("#TitlebarUsernameTextOpacity").val()
 			
+			$("#c5preview").find(".forum_item:first").remove();
+			MainFunctions.GenerateStylePreview(s, "#c5preview", _noStyling=true);
 			MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
 		});
 
@@ -3266,6 +3285,7 @@ var MainFunctions = {
 							}
 							var clearableBox = $("<div/>");
 							var cid = "ClearablePreviewBox";
+							$('#' + cid).remove();
 							$(clearableBox).attr("id", cid);
 							$(clearableBox).css("display", "block");
 							$(clearableBox).css({position:"fixed", top:"10px", right:"10px", padding:"10px", backgroundColor:"#1B1D1F", zIndex:9000});
