@@ -2,7 +2,7 @@
 // @name			Coup d'Bungie 5 for Firefox
 // @namespace		https://github.com/Shou-/Coup-5
 // @description		Personlize your bungie.net experience
-// @version	 		5.4.3
+// @version	 		5.5
 // @include			http*://*bungie.net/*
 // @exclude			http*://*bungie.net/*createpost.aspx*
 // @exclude			http*://*bungie.net/Account/Playtest/*
@@ -10,13 +10,25 @@
 // @author			dazarobbo
 // @copyright		2011, dazarobbo
 // @contributor		Iggyhopper
-// @contributor		Tidus Zero
+// @contributor		Tidus Zero / Shou-
 // @contributor		DavidJCobb
 // @require			http://code.jquery.com/jquery-1.8.1.min.js
 // @require			http://dohpaz.com/flydom/js/jquery.flydom-3.1.1.js
 // @require			https://raw.github.com/Shou-/Coup-5/master/jquery.wheelcolorpicker.min.js
 // @license			(CC) Attribution Non-Commercial Share Alike; http://creativecommons.org/licenses/by-nc-sa/3.0/
 // ==/UserScript==
+
+// Use tabs for this project.
+// :set noexpandtab
+
+// TODO:
+// - Style saving.
+//   Saved coups appear as the preview and are positioned below the style inputs.
+//   They can be clicked directly to change.
+//   Check for changes to avoid annoyances?
+
+// FIXME:
+// - Possible ignore list error?
 
 //New Console
 var Console = {
@@ -25,7 +37,7 @@ var Console = {
 			try{
 				GM_log(a);
 			} catch(e) {
-				console.log(a);
+				unsafeWindow.console.log(a);
 			}
 		}
 	}
@@ -445,17 +457,26 @@ Browser.XHR.prototype = {
 
 //Options: Created 30th August, 2011
 var Options = {
+	// Add :: Key -> Key -> Key -> Object -> IO ()
 	Add:function(e, g, o, v){
 		options = JSON.parse(Browser.Memory.Get(e, "{}"));
 		options[g] = options[g] ? options[g] : {};
 		options[g][o] = v;
 		Browser.Memory.Set(e, JSON.stringify(options));
 	},
+	// Get :: Key -> Key -> Key -> Object -> IO Object
 	Get:function(e, g, o, f){
 		options = JSON.parse(Browser.Memory.Get(e, "{}"));
 		options[g] = options[g] != undefined ? options[g] : {};
 		return options[g][o] != undefined ? options[g][o] : f;
 	},
+	// See :: Key -> Key -> IO Object
+	See:function(e, g){
+		options = JSON.parse(Browser.Memory.Get(e, "{}"));
+		options[g] = options[g] != undefined ? options[g] : {};
+		return options[g];
+	},
+	// Del :: Key -> Key -> Key -> IO ()
 	Del:function(e, g, o){
 		if(o) {
 			options = JSON.parse(Browser.Memory.Get(e, "{}"));
@@ -469,6 +490,7 @@ var Options = {
 		}
 		Browser.Memory.Set(e, JSON.stringify(options));
 	},
+	// Empty :: Key -> IO ()
 	Empty:function(e){
 		Browser.Memory.Delete(e);
 	}
@@ -844,7 +866,7 @@ function SignatureLive(){
 //CoupDBungie: Revised 21st August, 2011
 var CoupDBungie = {
 	
-	Debug:false,
+	Debug:true,
 	
 	Version:"5.4.3",
 	Platform:Browser.Type.Platform(),
@@ -915,7 +937,7 @@ var CoupDBungie = {
 		if(currentTime > lastCheck + (3600 * 24)){
 			var xhr = new Browser.XHR(
 				"GET",
-				"http://shou.dyndns-server.com/hak_the_planet/version.json",
+				"http://suwako.shou.io/coup5/version.json",
 				true,
 				"json",
 				null,
@@ -1340,7 +1362,7 @@ var MainFunctions = {
 		var rgb;
 		var rgb2;
 		var usernameElem = $(element).find("ul.author_header_block li.login > a");
-		temp = JSON.parse(Browser.Memory.Get('coup5options', "{}"));
+		var temp = JSON.parse(Browser.Memory.Get('coup5options', "{}"));
 		var ocheckbox = temp['checkbox'] != undefined ? temp['checkbox'] : {};
 		temp = JSON.parse(Browser.Memory.Get('coup5options', "{}"));
 		var otext = temp['text'] != undefined ? temp['text'] : {};
@@ -1535,7 +1557,7 @@ var MainFunctions = {
 
 		//Set post text
 		if(ShouldDo("PostFont")){
-			$(element).find("div.postbody > p").css("font-family", styles.PostFont.HTMLEncode());
+			$(element).find("div.postbody > p, div.postbody > p a").css("font-family", styles.PostFont.HTMLEncode());
 		}
 		if(ShouldDo("PostFontColor")){
 			$(element).find("div.postbody > p").css("color", "#" + styles.PostFontColor.HTMLEncode());
@@ -1552,18 +1574,19 @@ var MainFunctions = {
 			if(preview_) {
 				temp.append(element);
 				return temp;
+			} else if (!preview_) {
+				null;
 			}
 		} catch(e) {
-			return element;
+			null;
 		}
 		
 	},
 	
-	GenerateStylePreview:function(styles){
+	GenerateStylePreview:function(styles, elem){
 	
-		var preview = "#PublishSettingsPreviewBox"
-		$(preview).createAppend(
-			"div", {className:"forum_item"}, [
+		$(elem).createAppend(
+			"div", {className:"forum_item", style:"min-height:200px;"}, [
 				"div", {className:"forum_item_outer_shell"}, [
 					"div", null, [
 						"span", null, [
@@ -1639,8 +1662,85 @@ var MainFunctions = {
 				]
 			]
 		);
-		
-		return MainFunctions.ApplyStylesToElement(styles, $(preview).find(".forumpost:first"), preview_=true);
+		try {
+			if (_noStyling) null;
+		} catch(e) {
+			return MainFunctions.ApplyStylesToElement(styles, $(elem).find(".forumpost:first"), preview_=true);
+		}
+	},
+	
+	InsertCoupStyles:function(s){
+		var colorize = function(x){
+			return "background-color: " + x + "; color: rgb(0, 0, 0); border-style: solid; border-radius: 2px 2px 2px 2px; width: 150px;"
+		}
+		$("#AvatarBorderColor").val(s.AvatarBorderColor).attr("style", colorize('#' + s.AvatarBorderColor));
+		$("#AvatarBorderStyle").val(s.AvatarBorderStyle);
+
+		$("#AvatarImage").val(s.AvatarImage);
+		$("#AvatarOpacity").val(s.AvatarOpacity);
+
+		$("#PostBackground1Image").val(s.PostBackground1Image);
+		$("#PostBackground1ImageOpacity").val(s.PostBackground1ImageOpacity);
+		$("#PostBackground1ImageRepeat").val(s.PostBackground1ImageRepeat);
+		$("#PostBackground1ImageAttachment").val(s.PostBackground1ImageAttachment);
+		$("#PostBackground1ImagePosition").val(s.PostBackground1ImagePosition);
+
+		$("#PostBackground2Image").val(s.PostBackground2Image);
+		$("#PostBackground2ImageOpacity").val(s.PostBackground2ImageOpacity);
+		$("#PostBackground2ImageRepeat").val(s.PostBackground2ImageRepeat);
+		$("#PostBackground2ImageAttachment").val(s.PostBackground2ImageAttachment);
+		$("#PostBackground2ImagePosition").val(s.PostBackground2ImagePosition);
+
+		$("#PostBackground3Image").val(s.PostBackground3Image);
+		$("#PostBackground3ImageOpacity").val(s.PostBackground3ImageOpacity);
+		$("#PostBackground3ImageRepeat").val(s.PostBackground3ImageRepeat);
+		$("#PostBackground3ImageAttachment").val(s.PostBackground3ImageAttachment);
+		$("#PostBackground3ImagePosition").val(s.PostBackground3ImagePosition);
+
+		$("#PostBackgroundColor").val(s.PostBackgroundColor).attr("style", colorize('#' + s.PostBackgroundColor));
+		$("#PostBackgroundGradientLeft").val(s.PostBackgroundGradientLeft);
+		$("#PostBackgroundGradientRight").val(s.PostBackgroundGradientRight);
+
+		$("#PostFont").val(s.PostFont);
+		$("#PostFontColor").val(s.PostFontColor).attr("style", colorize('#' + s.PostFontColor));
+		$("#PostFontOpacity").val(s.PostFontOpacity);
+
+		$("#PostLinkColor").val(s.PostLinkColor).attr("style", colorize('#' + s.PostLinkColor));
+		$("#PostLinkOpacity").val(s.PostLinkOpacity);
+
+		$("#QuoteBackgroundColor").val(s.QuoteBackgroundColor).attr("style", colorize('#' + s.QuoteBackgroundColor));
+
+		$("#QuoteBorderColor").val(s.QuoteBorderColor).attr("style", colorize('#' + s.QuoteBorderColor));
+
+		$("#QuoteFontColor").val(s.QuoteFontColor).attr("style", colorize('#' + s.QuoteFontColor));
+
+		$("#TitlebarBackgroundColor").val(s.TitlebarBackgroundColor).attr("style", colorize('#' + s.TitlebarBackgroundColor));
+		$("#TitlebarBackgroundGradientLeft").val(s.TitlebarBackgroundGradientLeft).attr("style", colorize('#' + s.TitlebarBackgroundGradientLeft));
+		$("#TitlebarBackgroundGradientRight").val(s.TitlebarBackgroundGradientRight).attr("style", colorize('#' + s.TitlebarBackgroundGradientRight));
+		$("#TitlebarBackgroundImage").val(s.TitlebarBackgroundImage);
+		$("#TitlebarBackgroundOpacity").val(s.TitlebarBackgroundOpacity);
+
+		$("#TitlebarBorderStyle").val(s.TitlebarBorderStyle);
+		$("#TitlebarBorderColor").val(s.TitlebarBorderColor).attr("style", colorize('#' + s.TitlebarBorderColor));
+
+		$("#TitlebarGroupText").val(s.TitlebarGroupText);
+		$("#TitlebarGroupTextColor").val(s.TitlebarGroupTextColor).attr("style", colorize('#' + s.TitlebarGroupTextColor));
+		$("#TitlebarGroupTextOpacity").val(s.TitlebarGroupTextOpacity);
+
+		$("#TitlebarMessageText").val(s.TitlebarMessageText);
+		$("#TitlebarMessageTextColor").val(s.TitlebarMessageTextColor).attr("style", colorize('#' + s.TitlebarMessageTextColor));
+		$("#TitlebarMessageTextOpacity").val(s.TitlebarMessageTextOpacity);
+
+		$("#TitlebarMoreOpacity").val(s.TitlebarMoreOpacity);
+
+		$("#TitlebarTitleText").val(s.TitlebarTitleText);
+		$("#TitlebarTitleTextColor").val(s.TitlebarTitleTextColor).attr("style", colorize('#' + s.TitlebarTitleTextColor));
+		$("#TitlebarTitleTextOpacity").val(s.TitlebarTitleTextOpacity);
+
+		$("#TitlebarUsernameText").val(s.TitlebarUsernameText);
+		$("#TitlebarUsernameTextColor").val(s.TitlebarUsernameTextColor).attr("style", colorize('#' + s.TitlebarUsernameTextColor));
+		$("#TitlebarUsernameTextOpacity").val(s.TitlebarUsernameTextOpacity);
+
 	},
 	
 	ClientProfilePage:function(){
@@ -2429,11 +2529,113 @@ var MainFunctions = {
 													);
 											
 												}
+											}, null,
+											"input", {type:"button", style:{margin:"8px", marginLeft:"0px"}, value:"Save Styles",
+												onclick:function(){
+													var name = prompt("Style name (will overwrite if already exists):");
+													if (name != undefined && name != ""){
+
+														var strFloat = function(s){ return parseFloat(s).toString(); }
+														var s = new Styles();
+														
+														s.TitlebarUsernameText = $("#TitlebarUsernameText").val();
+														s.TitlebarUsernameTextColor = $("#TitlebarUsernameTextColor").val().toLowerCase();
+														s.TitlebarUsernameTextOpacity = strFloat($("#TitlebarUsernameTextOpacity").val());
+														s.TitlebarTitleText = $("#TitlebarTitleText").val();
+														s.TitlebarTitleTextColor = $("#TitlebarTitleTextColor").val().toLowerCase();
+														s.TitlebarTitleTextOpacity = strFloat($("#TitlebarTitleTextOpacity").val());
+														s.TitlebarMessageText = $("#TitlebarMessageText").val();
+														s.TitlebarMessageTextColor = $("#TitlebarMessageTextColor").val().toLowerCase();
+														s.TitlebarMessageTextOpacity = strFloat($("#TitlebarMessageTextOpacity").val());
+														s.TitlebarGroupText = $("#TitlebarGroupText").val();
+														s.TitlebarGroupTextColor = $("#TitlebarGroupTextColor").val().toLowerCase();
+														s.TitlebarGroupTextOpacity = strFloat($("#TitlebarGroupTextOpacity").val());
+														s.TitlebarBackgroundImage = $("#TitlebarBackgroundImage").val();
+														s.TitlebarBackgroundOpacity = strFloat($("#TitlebarBackgroundOpacity").val());
+														s.TitlebarBackgroundColor = $("#TitlebarBackgroundColor").val().toLowerCase();
+														s.TitlebarBackgroundGradientLeft = $("#TitlebarBackgroundGradientLeft").val();
+														s.TitlebarBackgroundGradientRight = $("#TitlebarBackgroundGradientRight").val();
+														s.TitlebarBorderStyle = $("#TitlebarBorderStyle").val().toLowerCase();
+														s.TitlebarBorderColor = $("#TitlebarBorderColor").val().toLowerCase();
+														s.TitlebarMoreOpacity = strFloat($("#TitlebarMoreOpacity").val());
+														
+														s.AvatarImage = $("#AvatarImage").val();
+														s.AvatarOpacity = strFloat($("#AvatarOpacity").val());
+														s.AvatarBorderStyle = $("#AvatarBorderStyle").val().toLowerCase();
+														s.AvatarBorderColor = $("#AvatarBorderColor").val().toLowerCase();
+														
+														s.PostBackground1Image = $("#PostBackground1Image").val();
+														s.PostBackground1ImageOpacity = strFloat($("#PostBackground1ImageOpacity").val());
+														s.PostBackground1ImagePosition = $("#PostBackground1ImagePosition").val().toLowerCase();
+														s.PostBackground1ImageAttachment = $("#PostBackground1ImageAttachment").val().toLowerCase();
+														s.PostBackground1ImageRepeat = $("#PostBackground1ImageRepeat").val().toLowerCase();
+														s.PostBackground2Image = $("#PostBackground2Image").val();
+														s.PostBackground2ImageOpacity = strFloat($("#PostBackground2ImageOpacity").val());
+														s.PostBackground2ImagePosition = $("#PostBackground2ImagePosition").val().toLowerCase();
+														s.PostBackground2ImageAttachment = $("#PostBackground2ImageAttachment").val().toLowerCase();
+														s.PostBackground2ImageRepeat = $("#PostBackground2ImageRepeat").val().toLowerCase();
+														s.PostBackground3Image = $("#PostBackground3Image").val();
+														s.PostBackground3ImageOpacity = strFloat($("#PostBackground3ImageOpacity").val());
+														s.PostBackground3ImagePosition = $("#PostBackground3ImagePosition").val().toLowerCase();
+														s.PostBackground3ImageAttachment = $("#PostBackground3ImageAttachment").val().toLowerCase();
+														s.PostBackground3ImageRepeat = $("#PostBackground3ImageRepeat").val().toLowerCase();
+														s.PostBackgroundColor = $("#PostBackgroundColor").val().toLowerCase();
+														s.PostBackgroundGradientLeft = $("#PostBackgroundGradientLeft").val();
+														s.PostBackgroundGradientRight = $("#PostBackgroundGradientRight").val();
+														s.PostFont = $("#PostFont").val().toLowerCase();
+														s.PostFontColor = $("#PostFontColor").val().toLowerCase();
+														s.PostFontOpacity = strFloat($("#PostFontOpacity").val());
+														s.PostLinkColor = $("#PostLinkColor").val().toLowerCase();
+														s.PostLinkOpacity = strFloat($("#PostLinkOpacity").val());
+
+														s.QuoteBorderColor = $("#QuoteBorderColor").val().toLowerCase();
+														s.QuoteFontColor = $("#QuoteFontColor").val().toLowerCase();
+														s.QuoteBackgroundColor = $("#QuoteBackgroundColor").val().toLowerCase();
+
+														Options.Add("coup5styles", Client.GetUsername(), name, s);
+														if (document.getElementById("c5style_" + name)){
+															var elem = "#c5style_" + name;
+															MainFunctions.ApplyStylesToElement(s, $(elem).find(".forumpost:first"), preview_=false);
+														}
+														else {
+															var elem = "#c5style_" + name;
+															$("#SavedStyles").createAppend(
+																"div", {id:"c5style_" + name, className:"c5style", style:"margin-bottom: 20px; padding-bottom:5px;"}, null
+															);
+															MainFunctions.GenerateStylePreview(s, elem, _noStyling=true);
+															MainFunctions.ApplyStylesToElement(s, $(elem).find(".forumpost:first"), preview_=false);
+															$(elem).createPrepend(
+																"h1", {style:"padding: 5px;"}, name
+															);
+															$(elem).createAppend(
+																"div", null, [
+																	"input", {type:"button", value:"Load Style",
+																		onclick:function(){
+																			MainFunctions.InsertCoupStyles(s);
+																			MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
+																		}
+																	}, null,
+																	"input", {type:"button", value:"Delete Style",
+																		onclick:function(){
+																			Options.Del("coup5styles", Client.GetUsername(), name);
+																			$("#c5style_" + name).remove();
+																		}
+																	}, null
+																],
+																"hr", null, null
+															);
+														}
+													}
+												}
 											}, null
-											
+										]
+									],
+									"tr", {style:"background-color: transparent !important;"}, [
+										"td", {id:"SavedStyles", colspan:"3"}, [
+											"h3", null, "Styles",
+											"div", {id:"c5preview", className:"c5style", style:"margin-bottom: 20px; padding-bottom: 5px;"}, null
 										]
 									]
-									
 								]
 							]
 						],
@@ -2841,6 +3043,43 @@ var MainFunctions = {
 				]
 			]
 		);
+
+		// Preview title
+		$("#c5preview").createPrepend(
+			"h1", {style:"padding: 5px;"}, "Preview"
+		);
+
+		// Saved styles
+		var savedStyles = Options.See("coup5styles", Client.GetUsername());
+		for (name in savedStyles) {
+			var elem = "#c5style_" + name;
+			var s = savedStyles[name];
+			$("#SavedStyles").createAppend(
+				"div", {id:"c5style_" + name, className:"c5style", style:"margin-bottom: 20px; padding-bottom:5px;"}, null
+			);
+			MainFunctions.GenerateStylePreview(s, elem, _noStyling=true);
+			MainFunctions.ApplyStylesToElement(s, $(elem).find(".forumpost:first"), preview_=false);
+			$(elem).createPrepend(
+				"h1", {style:"padding: 5px;"}, name
+			);
+			$(elem).createAppend(
+				"div", null, [
+					"input", {type:"button", value:"Load Style",
+						onclick:function(){
+							MainFunctions.InsertCoupStyles(s);
+							MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
+						}
+					}, null,
+					"input", {type:"button", value:"Delete Style",
+						onclick:function(){
+							Options.Del("coup5styles", Client.GetUsername(), name);
+							$("#c5style_" + name).remove();
+						}
+					}, null
+				],
+				"hr", null, null
+			);
+		}
 		
 		var box = document.createElement("div");
 		$(box).createAppend("div", {id:"PublishSettingsPreviewBox", className:"PreviewBox", style:{width:"670px", cssFloat:"left", display:"none", position:"fixed", backgroundColor:"#1B1D1F", "z-index":"11", bottom:"0px"}}, null);
@@ -2853,8 +3092,6 @@ var MainFunctions = {
 		
 		$("#PublishSettingsTable input:text").bind("focus", function(){
 	
-			$("#PublishSettingsPreviewBox > :not(.hideBtnBox)").remove();
-			
 			var s = new Styles();
 
 			s.AvatarBorderColor = $("#AvatarBorderColor").val();
@@ -2925,11 +3162,80 @@ var MainFunctions = {
 			s.TitlebarUsernameTextColor = $("#TitlebarUsernameTextColor").val();
 			s.TitlebarUsernameTextOpacity = $("#TitlebarUsernameTextOpacity").val()
 			
-			$("#PublishSettingsPreviewBox").prepend(MainFunctions.GenerateStylePreview(s));
-			$(".PreviewBox").show();
+			MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
 		});
 		$("#PublishSettingsTable input:text").bind("blur", function(){
-			$(".PreviewBox").hide();
+			var s = new Styles();
+
+			s.AvatarBorderColor = $("#AvatarBorderColor").val();
+			s.AvatarBorderStyle = $("#AvatarBorderStyle").val();
+
+			s.AvatarImage = $("#AvatarImage").val();
+			s.AvatarOpacity = $("#AvatarOpacity").val();
+
+			s.PostBackground1Image = $("#PostBackground1Image").val();
+			s.PostBackground1ImageAttachment = $("#PostBackground1ImageAttachment").val();
+			s.PostBackground1ImageOpacity = $("#PostBackground1ImageOpacity").val();
+			s.PostBackground1ImagePosition = $("#PostBackground1ImagePosition").val();
+			s.PostBackground1ImageRepeat = $("#PostBackground1ImageRepeat").val();
+			
+			s.PostBackground2Image = $("#PostBackground2Image").val();
+			s.PostBackground2ImageAttachment = $("#PostBackground2ImageAttachment").val();
+			s.PostBackground2ImageOpacity = $("#PostBackground2ImageOpacity").val();
+			s.PostBackground2ImagePosition = $("#PostBackground2ImagePosition").val();
+			s.PostBackground2ImageRepeat = $("#PostBackground2ImageRepeat").val();
+			
+			s.PostBackground3Image = $("#PostBackground3Image").val();
+			s.PostBackground3ImageAttachment = $("#PostBackground3ImageAttachment").val();
+			s.PostBackground3ImageOpacity = $("#PostBackground3ImageOpacity").val();
+			s.PostBackground3ImagePosition = $("#PostBackground3ImagePosition").val();
+			s.PostBackground3ImageRepeat = $("#PostBackground3ImageRepeat").val();
+			
+			s.PostBackgroundColor = $("#PostBackgroundColor").val();
+			s.PostBackgroundGradientLeft = $("#PostBackgroundGradientLeft").val();
+			s.PostBackgroundGradientRight = $("#PostBackgroundGradientRight").val();
+
+			s.PostFont = $("#PostFont").val();
+			s.PostFontColor = $("#PostFontColor").val();
+			s.PostFontOpacity = $("#PostFontOpacity").val();
+
+			s.PostLinkColor = $("#PostLinkColor").val();
+			s.PostLinkOpacity = $("#PostLinkOpacity").val();
+
+			s.QuoteBackgroundColor = $("#QuoteBackgroundColor").val();
+
+			s.QuoteBorderColor = $("#QuoteBorderColor").val();
+
+			s.QuoteFontColor = $("#QuoteFontColor").val();
+
+			s.TitlebarBackgroundColor = $("#TitlebarBackgroundColor").val();
+			s.TitlebarBackgroundGradientLeft = $("#TitlebarBackgroundGradientLeft").val();
+			s.TitlebarBackgroundGradientRight = $("#TitlebarBackgroundGradientRight").val();
+			s.TitlebarBackgroundImage = $("#TitlebarBackgroundImage").val();
+			s.TitlebarBackgroundOpacity = $("#TitlebarBackgroundOpacity").val();
+
+			s.TitlebarBorderColor = $("#TitlebarBorderColor").val();
+			s.TitlebarBorderStyle = $("#TitlebarBorderStyle").val();
+
+			s.TitlebarGroupText = $("#TitlebarGroupText").val();
+			s.TitlebarGroupTextColor = $("#TitlebarGroupTextColor").val();
+			s.TitlebarGroupTextOpacity = $("#TitlebarGroupTextOpacity").val();
+
+			s.TitlebarMessageText = $("#TitlebarMessageText").val();
+			s.TitlebarMessageTextColor = $("#TitlebarMessageTextColor").val();
+			s.TitlebarMessageTextOpacity = $("#TitlebarMessageTextOpacity").val();
+
+			s.TitlebarMoreOpacity = $("#TitlebarMoreOpacity").val();
+
+			s.TitlebarTitleText = $("#TitlebarTitleText").val();
+			s.TitlebarTitleTextColor = $("#TitlebarTitleTextColor").val();
+			s.TitlebarTitleTextOpacity = $("#TitlebarTitleTextOpacity").val();
+
+			s.TitlebarUsernameText = $("#TitlebarUsernameText").val();
+			s.TitlebarUsernameTextColor = $("#TitlebarUsernameTextColor").val();
+			s.TitlebarUsernameTextOpacity = $("#TitlebarUsernameTextOpacity").val()
+			
+			MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
 		});
 
 		//Add color wheel
@@ -2962,16 +3268,20 @@ var MainFunctions = {
 								alert("Styles unavailable for this user.");
 								return;
 							}
-							var pre = MainFunctions.GenerateStylePreview(page.Data.Styles);
 							var clearableBox = $("<div/>");
+							var cid = "ClearablePreviewBox";
+							$(clearableBox).attr("id", cid);
+							$(clearableBox).css("display", "block");
 							$(clearableBox).css({position:"fixed", top:"10px", right:"10px", padding:"10px", backgroundColor:"#1B1D1F", zIndex:9000});
-							$(pre).appendTo(clearableBox);
 							clearableBox.createAppend(
 								"input", {type:"button", value:"Close", onclick:function(){
 									$(this).parent().remove();
+									$("#PublishSettingsPreviewBox").css("display", "none");
 								}}
 							);
 							$(clearableBox).appendTo("body");
+							MainFunctions.GenerateStylePreview(page.Data.Styles, '#' + cid);
+							MainFunctions.ApplyStylesToElement(page.Data.Styles, $('#' + cid).find('.forumpost:first'), preview_=false);
 						}}, Cache.WorkingSet[i].Data.Username
 					],
 					
@@ -3066,73 +3376,10 @@ var MainFunctions = {
 				if(obj != null && obj.Status === CoupDBungie.Server.Responses.OK && obj.Users[0]){
 					var s = obj.Users[0].Styles;
 
-					$("#AvatarBorderColor").val(s.AvatarBorderColor);
-					$("#AvatarBorderStyle").val(s.AvatarBorderStyle);
+					MainFunctions.InsertCoupStyles(s);
+					MainFunctions.GenerateStylePreview(s, "#c5preview", _noStyling=true);
+					MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
 
-					$("#AvatarImage").val(s.AvatarImage);
-					$("#AvatarOpacity").val(s.AvatarOpacity);
-
-					$("#PostBackground1Image").val(s.PostBackground1Image);
-					$("#PostBackground1ImageOpacity").val(s.PostBackground1ImageOpacity);
-					$("#PostBackground1ImageRepeat").val(s.PostBackground1ImageRepeat);
-					$("#PostBackground1ImageAttachment").val(s.PostBackground1ImageAttachment);
-					$("#PostBackground1ImagePosition").val(s.PostBackground1ImagePosition);
-
-					$("#PostBackground2Image").val(s.PostBackground2Image);
-					$("#PostBackground2ImageOpacity").val(s.PostBackground2ImageOpacity);
-					$("#PostBackground2ImageRepeat").val(s.PostBackground2ImageRepeat);
-					$("#PostBackground2ImageAttachment").val(s.PostBackground2ImageAttachment);
-					$("#PostBackground2ImagePosition").val(s.PostBackground2ImagePosition);
-
-					$("#PostBackground3Image").val(s.PostBackground3Image);
-					$("#PostBackground3ImageOpacity").val(s.PostBackground3ImageOpacity);
-					$("#PostBackground3ImageRepeat").val(s.PostBackground3ImageRepeat);
-					$("#PostBackground3ImageAttachment").val(s.PostBackground3ImageAttachment);
-					$("#PostBackground3ImagePosition").val(s.PostBackground3ImagePosition);
-
-					$("#PostBackgroundColor").val(s.PostBackgroundColor);
-					$("#PostBackgroundGradientLeft").val(s.PostBackgroundGradientLeft);
-					$("#PostBackgroundGradientRight").val(s.PostBackgroundGradientRight);
-
-					$("#PostFont").val(s.PostFont);
-					$("#PostFontColor").val(s.PostFontColor);
-					$("#PostFontOpacity").val(s.PostFontOpacity);
-
-					$("#PostLinkColor").val(s.PostLinkColor);
-					$("#PostLinkOpacity").val(s.PostLinkOpacity);
-
-					$("#QuoteBackgroundColor").val(s.QuoteBackgroundColor);
-
-					$("#QuoteBorderColor").val(s.QuoteBorderColor);
-
-					$("#QuoteFontColor").val(s.QuoteFontColor);
-
-					$("#TitlebarBackgroundColor").val(s.TitlebarBackgroundColor);
-					$("#TitlebarBackgroundGradientLeft").val(s.TitlebarBackgroundGradientLeft);
-					$("#TitlebarBackgroundGradientRight").val(s.TitlebarBackgroundGradientRight);
-					$("#TitlebarBackgroundImage").val(s.TitlebarBackgroundImage);
-					$("#TitlebarBackgroundOpacity").val(s.TitlebarBackgroundOpacity);
-
-					$("#TitlebarBorderStyle").val(s.TitlebarBorderStyle);
-					$("#TitlebarBorderColor").val(s.TitlebarBorderColor);
-
-					$("#TitlebarGroupText").val(s.TitlebarGroupText);
-					$("#TitlebarGroupTextColor").val(s.TitlebarGroupTextColor);
-					$("#TitlebarGroupTextOpacity").val(s.TitlebarGroupTextOpacity);
-
-					$("#TitlebarMessageText").val(s.TitlebarMessageText);
-					$("#TitlebarMessageTextColor").val(s.TitlebarMessageTextColor);
-					$("#TitlebarMessageTextOpacity").val(s.TitlebarMessageTextOpacity);
-
-					$("#TitlebarMoreOpacity").val(s.TitlebarMoreOpacity);
-
-					$("#TitlebarTitleText").val(s.TitlebarTitleText);
-					$("#TitlebarTitleTextColor").val(s.TitlebarTitleTextColor);
-					$("#TitlebarTitleTextOpacity").val(s.TitlebarTitleTextOpacity);
-
-					$("#TitlebarUsernameText").val(s.TitlebarUsernameText);
-					$("#TitlebarUsernameTextColor").val(s.TitlebarUsernameTextColor);
-					$("#TitlebarUsernameTextOpacity").val(s.TitlebarUsernameTextOpacity);
 				}
 			},
 			null,

@@ -1,0 +1,7 @@
+Changelog
+
+5.5:
+- Changed update domain.
+- Added style saving.
+- Fixed post links not using the proper font.
+- Style inputs are colored on load.
