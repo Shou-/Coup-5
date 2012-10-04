@@ -5,3 +5,10 @@ Changelog
 - Added style saving.
 - Fixed post links not using the proper font.
 - Style inputs are colored on load.
+
+5.5.1:
+- Fixed style loading and deleting.
+
+5.5.2:
+- Small styling changes.
+- JQuery colorwheel fix.

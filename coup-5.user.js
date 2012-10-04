@@ -2,7 +2,7 @@
 // @name			Coup d'Bungie 5 for Firefox
 // @namespace		https://github.com/Shou-/Coup-5
 // @description		Personlize your bungie.net experience
-// @version	 		5.5
+// @version	 		5.5.2
 // @include			http*://*bungie.net/*
 // @exclude			http*://*bungie.net/*createpost.aspx*
 // @exclude			http*://*bungie.net/Account/Playtest/*
@@ -864,7 +864,7 @@ var CoupDBungie = {
 	
 	Debug:true,
 	
-	Version:"5.5",
+	Version:"5.5.2",
 	Platform:Browser.Type.Platform(),
 	Author:"dazarobbo",
 	AuthorMemberID:2758679,
@@ -2601,7 +2601,7 @@ var MainFunctions = {
 														else {
 															var elem = "#c5style_" + name;
 															$("#SavedStyles").createAppend(
-																"div", {id:"c5style_" + name, className:"c5style", style:"margin-bottom: 20px; padding-bottom:5px;"}, null
+																"div", {id:"c5style_" + name, className:"c5style", style:"padding-bottom:5px;"}, null
 															);
 															MainFunctions.GenerateStylePreview(s, elem, _noStyling=true);
 															MainFunctions.ApplyStylesToElement(s, $(elem).find(".forumpost:first"), preview_=false);
@@ -2639,7 +2639,7 @@ var MainFunctions = {
 									"tr", {style:"background-color: transparent !important;"}, [
 										"td", {id:"SavedStyles", colspan:"3"}, [
 											"h3", null, "Styles",
-											"div", {id:"c5preview", className:"c5style", style:"margin-bottom: 20px; padding-bottom: 5px;"}, null
+											"div", {id:"c5preview", className:"c5style", style:"margin-bottom: padding-bottom: 5px;"}, null
 										]
 									]
 								]
@@ -3061,7 +3061,7 @@ var MainFunctions = {
 			var elem = "#c5style_" + styleName;
 			var s = savedStyles[styleName];
 			$("#SavedStyles").createAppend(
-				"div", {id:"c5style_" + styleName, className:"c5style", style:"margin-bottom: 20px; padding-bottom:5px;"}, null
+				"div", {id:"c5style_" + styleName, className:"c5style", style:"padding-bottom:5px;"}, null
 			);
 			MainFunctions.GenerateStylePreview(s, elem, _noStyling=true);
 			MainFunctions.ApplyStylesToElement(s, $(elem).find(".forumpost:first"), preview_=false);
