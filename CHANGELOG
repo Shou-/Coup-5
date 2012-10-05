@@ -12,3 +12,6 @@ Changelog
 5.5.2:
 - Small styling changes.
 - JQuery colorwheel fix.
+
+5.5.3:
+- Allow spaces and special characters in style names.

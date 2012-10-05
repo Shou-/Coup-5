@@ -1343,7 +1343,8 @@ var Client = {
 	},
 	SetIgnoreList:function(list){
 		Browser.Memory.Set(this.IGNORE_LIST_NAME, JSON.stringify(Array.Distinct(list)));
-	}
+	},
+	SavedStyles:{}
 
 }
 
@@ -1581,7 +1582,7 @@ var MainFunctions = {
 	
 	GenerateStylePreview:function(styles, elem){
 	
-		$(elem).createAppend(
+		elem.createAppend(
 			"div", {className:"forum_item", style:"min-height:200px;"}, [
 				"div", {className:"forum_item_outer_shell"}, [
 					"div", null, [
@@ -1661,7 +1662,7 @@ var MainFunctions = {
 		try {
 			if (_noStyling) null;
 		} catch(e) {
-			return MainFunctions.ApplyStylesToElement(styles, $(elem).find(".forumpost:first"), preview_=true);
+			return MainFunctions.ApplyStylesToElement(styles, elem.find(".forumpost:first"), preview_=true);
 		}
 	},
 	
@@ -2526,7 +2527,7 @@ var MainFunctions = {
 											
 												}
 											}, null,
-											"input", {type:"button", style:{margin:"8px", marginLeft:"0px"}, value:"Save Styles",
+											"input", {type:"button", style:{margin:"8px", marginLeft:"0px"}, value:"Save Style",
 												onclick:function(){
 													var name = prompt("Style name (will overwrite if already exists):");
 													if (name != undefined && name != ""){
@@ -2589,26 +2590,33 @@ var MainFunctions = {
 														s.QuoteBackgroundColor = $("#QuoteBackgroundColor").val().toLowerCase();
 
 														Options.Add("coup5styles", Client.GetUsername(), name, s);
-														if (document.getElementById("c5style_" + name)){
-															var elem = "#c5style_" + name;
-															$(elem).find(".forum_item:first").remove();
+														var exists;
+														var n;
+														for (i in Client.SavedStyles) if (Client.SavedStyles[i] == name){
+															exists = true;
+															n = i;
+														}
+														if (exists){
+															var elem = $($(".c5styles")[n]);
+															elem.find(".forum_item:first").remove();
 															MainFunctions.GenerateStylePreview(s, elem, _noStyling=true);
-															var e = $(elem).find(".forum_item:first");
+															var e = elem.find(".forum_item:first");
 															e.remove();
-															$(elem).find('h1').after(e);
-															MainFunctions.ApplyStylesToElement(s, $(elem).find(".forumpost:first"), preview_=false);
+															elem.find('h1').after(e);
+															MainFunctions.ApplyStylesToElement(s, elem.find(".forumpost:first"), preview_=false);
 														}
 														else {
-															var elem = "#c5style_" + name;
+															n = $(".c5style").length;
+															Client.SavedStyles[n] = name;
 															$("#SavedStyles").createAppend(
-																"div", {id:"c5style_" + name, className:"c5style", style:"padding-bottom:5px;"}, null
+																"div", {id:"c5style_" + n, className:"c5style", style:"padding-bottom:5px;"}, [
+																	"h1", {style:"padding: 5px;"}, name
+																]
 															);
+															var elem = $($(".c5style")[n]);
 															MainFunctions.GenerateStylePreview(s, elem, _noStyling=true);
-															MainFunctions.ApplyStylesToElement(s, $(elem).find(".forumpost:first"), preview_=false);
-															$(elem).createPrepend(
-																"h1", {style:"padding: 5px;"}, name
-															);
-															$(elem).createAppend(
+															MainFunctions.ApplyStylesToElement(s, elem.find(".forumpost:first"), preview_=false);
+															elem.createAppend(
 																"div", null, [
 																	"input", {type:"button", value:"Load Style", name:name,
 																		onclick:function(){
@@ -2616,7 +2624,7 @@ var MainFunctions = {
 																			var s = Options.Get("coup5styles", Client.GetUsername(), n);
 																			MainFunctions.InsertCoupStyles(s);
 																			$("#c5preview").find(".forum_item:first").remove();
-																			MainFunctions.GenerateStylePreview(s, "#c5preview", _noStyling=true);
+																			MainFunctions.GenerateStylePreview(s, $("#c5preview"), _noStyling=true);
 																			MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
 																		}
 																	}, null,
@@ -2624,7 +2632,7 @@ var MainFunctions = {
 																		onclick:function(){
 																			var n = $(this).attr("name");
 																			Options.Del("coup5styles", Client.GetUsername(), n);
-																			$("#c5style_" + n).remove();
+																			for (i in Client.SavedStyles) if (Client.SavedStyles[i] == n) $($(".c5style")[i]).remove();
 																		}
 																	}, null
 																],
@@ -2633,13 +2641,20 @@ var MainFunctions = {
 														}
 													}
 												}
+											}, null,
+											"input", {value:"Reset Styles", type:"button",
+												onclick:function(){
+													if(confirm("Are you sure you want to delete this user's locally saved styles?")){
+														Options.Del("coup5styles", Client.GetUsername());
+													}
+												}
 											}, null
 										]
 									],
 									"tr", {style:"background-color: transparent !important;"}, [
 										"td", {id:"SavedStyles", colspan:"3"}, [
 											"h3", null, "Styles",
-											"div", {id:"c5preview", className:"c5style", style:"margin-bottom: padding-bottom: 5px;"}, null
+											"div", {id:"c5preview", style:"margin-bottom: padding-bottom: 5px;"}, null
 										]
 									]
 								]
@@ -2935,12 +2950,23 @@ var MainFunctions = {
 										]
 									],
 									"div", {style:{marginTop:"10px"}}, [
-									"input", {type:"button", value:"Saved automatically", disabled:"disabled"}, null,
-									"input", {type:"button", value:"Reset options", onclick:function(){
-										if(confirm("Are you sure you want to reset all options?")){
-											Options.Empty('coup5options');
-										}
-									}}
+										"input", {type:"button", value:"Saved automatically", disabled:"disabled"}, null,
+										"input", {type:"button", value:"Reset options",
+											onclick:function(){
+												if(confirm("Are you sure you want to reset all options?")){
+													Options.Empty('coup5options');
+												}
+											}
+										}, null,
+										"input", {type:"button", value:"Master reset",
+											onclick:function(){
+												if(confirm("Are you sure you want to delete all locally saved Coup-5 settings? (Ignore list, saved styles, options)")){
+													Options.Empty("coup5ignorelist");
+													Options.Empty("coup5styles");
+													Options.Empty("coup5options");
+												}
+											}
+										}, null
 									]
 								]
 							]
@@ -3058,17 +3084,18 @@ var MainFunctions = {
 		// Saved styles
 		var savedStyles = Options.See("coup5styles", Client.GetUsername());
 		for (styleName in savedStyles) {
-			var elem = "#c5style_" + styleName;
+			var n = $(".c5style").length;
+			Client.SavedStyles[n] = styleName;
 			var s = savedStyles[styleName];
 			$("#SavedStyles").createAppend(
-				"div", {id:"c5style_" + styleName, className:"c5style", style:"padding-bottom:5px;"}, null
+				"div", {id:"c5style_" + n, className:"c5style", style:"padding-bottom:5px;"}, [
+					"h1", {style:"padding: 5px;"}, styleName
+				]
 			);
+			var elem = $($(".c5style")[n]);
 			MainFunctions.GenerateStylePreview(s, elem, _noStyling=true);
-			MainFunctions.ApplyStylesToElement(s, $(elem).find(".forumpost:first"), preview_=false);
-			$(elem).createPrepend(
-				"h1", {style:"padding: 5px;"}, styleName
-			);
-			$(elem).createAppend(
+			MainFunctions.ApplyStylesToElement(s, elem.find(".forumpost:first"), preview_=false);
+			elem.createAppend(
 				"div", null, [
 					"input", {type:"button", value:"Load Style", name:styleName,
 						onclick:function(){
@@ -3076,15 +3103,15 @@ var MainFunctions = {
 							var s = Options.Get("coup5styles", Client.GetUsername(), n);
 							MainFunctions.InsertCoupStyles(s);
 							$("#c5preview").find(".forum_item:first").remove();
-							MainFunctions.GenerateStylePreview(s, "#c5preview", _noStyling=true);
+							MainFunctions.GenerateStylePreview(s, $("#c5preview"), _noStyling=true);
 							MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
 						}
 					}, null,
 					"input", {type:"button", value:"Delete Style", name:styleName,
 						onclick:function(){
 							var n = $(this).attr("name");
-							Options.Del("coup5styles", Client.GetUsename(), n);
-							$("#c5style_" + n).remove();
+							Options.Del("coup5styles", Client.GetUsername(), n);
+							for (i in Client.SavedStyles) if (Client.SavedStyles[i] == n) $($(".c5style")[i]).remove();
 						}
 					}, null
 				],
@@ -3174,7 +3201,7 @@ var MainFunctions = {
 			s.TitlebarUsernameTextOpacity = $("#TitlebarUsernameTextOpacity").val()
 			
 			$("#c5preview").find(".forum_item:first").remove();
-			MainFunctions.GenerateStylePreview(s, "#c5preview", _noStyling=true);
+			MainFunctions.GenerateStylePreview(s, $("#c5preview"), _noStyling=true);
 			MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
 		});
 		$("#PublishSettingsTable input:text").bind("blur", function(){
@@ -3249,7 +3276,7 @@ var MainFunctions = {
 			s.TitlebarUsernameTextOpacity = $("#TitlebarUsernameTextOpacity").val()
 			
 			$("#c5preview").find(".forum_item:first").remove();
-			MainFunctions.GenerateStylePreview(s, "#c5preview", _noStyling=true);
+			MainFunctions.GenerateStylePreview(s, $("#c5preview"), _noStyling=true);
 			MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
 		});
 
@@ -3296,7 +3323,7 @@ var MainFunctions = {
 								}}
 							);
 							$(clearableBox).appendTo("body");
-							MainFunctions.GenerateStylePreview(page.Data.Styles, '#' + cid);
+							MainFunctions.GenerateStylePreview(page.Data.Styles, $('#' + cid));
 							MainFunctions.ApplyStylesToElement(page.Data.Styles, $('#' + cid).find('.forumpost:first'), preview_=false);
 						}}, Cache.WorkingSet[i].Data.Username
 					],
@@ -3393,7 +3420,7 @@ var MainFunctions = {
 					var s = obj.Users[0].Styles;
 
 					MainFunctions.InsertCoupStyles(s);
-					MainFunctions.GenerateStylePreview(s, "#c5preview", _noStyling=true);
+					MainFunctions.GenerateStylePreview(s, $("#c5preview"), _noStyling=true);
 					MainFunctions.ApplyStylesToElement(s, $("#c5preview").find(".forumpost:first"), preview_=false);
 
 				}
