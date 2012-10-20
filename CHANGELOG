@@ -15,3 +15,8 @@ Changelog
 
 5.5.3:
 - Allow spaces and special characters in style names.
+
+5.5.4:
+- Added more/random preview messages.
+- Changed quote border to solid when the Coup-5 color for it is set.
+- Made the more opacity option affect the dividers and more button as well.

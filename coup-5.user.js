@@ -2,7 +2,7 @@
 // @name			Coup d'Bungie 5 for Firefox
 // @namespace		https://github.com/Shou-/Coup-5
 // @description		Personlize your bungie.net experience
-// @version	 		5.5.3
+// @version	 		5.5.4
 // @include			http*://*bungie.net/*
 // @exclude			http*://*bungie.net/*createpost.aspx*
 // @exclude			http*://*bungie.net/Account/Playtest/*
@@ -22,9 +22,16 @@
 // :set noexpandtab
 
 // TODO:
+// - User ignore whitelisting.
+//	 Can pass this as a function to whatever checks. blacklist() and whitelist();
+// - Allow simple HTML tags such as <b>, <i>, <u> in the titlebar.
+//	 See `ApplyStylesToElement' to change this. Specifically, stop using the
+//	 DOMObj.text(); function. Escape special HTML characters and replace
+//	 "&lt;b&gt;" with "<b>" and use DOMObj.innerHTML();.
 
 // FIXME:
-// - Possible ignore list error?
+// - Ignore list error. Random Coups on the same page as an ignored Coup (and possibly when not on the same page too?) are removed.
+//	 Check that ignore lists are stored per user and not globally for all Bungie.net users in the browser.
 
 //New Console
 var Console = {
@@ -864,7 +871,7 @@ var CoupDBungie = {
 	
 	Debug:true,
 	
-	Version:"5.5.3",
+	Version:"5.5.4",
 	Platform:Browser.Type.Platform(),
 	Author:"dazarobbo",
 	AuthorMemberID:2758679,
@@ -1437,8 +1444,12 @@ var MainFunctions = {
 		}
 
 		//Set more text
-		var moreElem = $(element).find("ul.author_header_block li.author_header_links:contains('more')");
-		moreElem.css("opacity", styles.TitlebarMoreOpacity);
+		var moreElem = $(element).find("ul.author_header_block li");
+		moreElem.each(function(i){
+			if ([1,3,4,6].indexOf(i) != -1){
+				$(this).css("opacity", styles.TitlebarMoreOpacity);
+			}
+		});
 
 		//Set group text
 		var groupElem = $(element).find("ul.author_header_block li.author_header_links > a:contains('groups')");
@@ -1547,6 +1558,7 @@ var MainFunctions = {
 		}
 		if(ShouldDo("QuoteBorderColor")){
 			quoteElem.css("border-color", '#' + styles.QuoteBorderColor);
+			quoteElem.css("border-style", "solid");
 		}
 		if(ShouldDo("QuoteFontColor")){
 			quoteElem.css("color", '#' + styles.QuoteFontColor);
@@ -1582,8 +1594,15 @@ var MainFunctions = {
 	
 	GenerateStylePreview:function(styles, elem){
 	
+		var ptexts = [ "<span class=\"IBBquotedtable\">I'd just like to <a href=\"javascript:;\">interject</a> for a moment.</span>What you're referring to as <a href=\"javascript:;\">Linux</a>, is in fact, <b>GNU/Linux</b>, or as I've recently taken to calling it, <i>GNU plus Linux</i>. Linux is not an operating system unto itself, but rather another <u>free component</u> of a fully functioning GNU system made useful by the GNU corelibs, shell utilities and vital system components comprising a full OS as defined by POSIX."
+					 , "<span class=\"IBBquotedtable\">Lorem ipsum dolor sit amet, <a href=\"javascript:;\">consectetur</a> adipiscing <b>elit</b>.</span>Curabitur condimentum, est et <i>aliquet</i> adipiscing, sem felis fermentum turpis, sed <u>tincidunt</u> erat nulla vel nisl. <a href=\"javascript:;\">Aliquam</a> tristique interdum tempor. Sed commodo ipsum a odio laoreet eleifend eleifend nisl auctor. Donec molestie scelerisque orci suscipit volutpat."
+					 , "<span class=\"IBBquotedtable\">A bus left the <a href=\"javascript:;\">Scarlet Devil Mansion</a>; three people boarded at the start.</span>At <i>Hakugyokurou</i>, one left and half a person boarded. At <a href=\"javascript:;\">Yakumo-san's house</a>, two people left; so how many passengers in total? The answer is, the answer is, <u>zero people, zero people</u>. That's because, that's because, there are no buses in <u>Gensokyo</u><b><i><u>!</u></i></b>"
+					 ];
+		var n = Math.floor(Math.random() * ptexts.length);
+		var ptext = ptexts[n];
+
 		elem.createAppend(
-			"div", {className:"forum_item", style:"min-height:200px;"}, [
+			"div", {className:"forum_item", style:"overflow: hidden; height: auto;"}, [
 				"div", {className:"forum_item_outer_shell"}, [
 					"div", null, [
 						"span", null, [
@@ -1641,7 +1660,7 @@ var MainFunctions = {
 											]
 										]
 									],
-									"p", {style:'margin:0px 0px 1em;'}, "<span class=\"IBBquotedtable\">Lorem ipsum dolor sit amet, <a href=\"javascript:;\">consectetur</a> adipiscing <b>elit</b>.</span>Curabitur condimentum, est et <i>aliquet</i> adipiscing, sem felis fermentum turpis, sed <u>tincidunt</u> erat nulla vel nisl. <a href=\"javascript:;\">Aliquam</a> tristique interdum tempor. Sed commodo ipsum a odio laoreet eleifend eleifend nisl auctor. Donec molestie scelerisque orci suscipit volutpat."
+									"p", {style:'margin:0px 0px 1em;'}, ptext
 								],
 								"div", {className:"post-actions"}, [
 									"ul", null, [
