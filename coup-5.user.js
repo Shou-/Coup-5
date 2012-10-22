@@ -2,7 +2,7 @@
 // @name			Coup d'Bungie 5 for Firefox
 // @namespace		https://github.com/Shou-/Coup-5
 // @description		Personlize your bungie.net experience
-// @version	 		5.5.4
+// @version	 		5.5.5
 // @include			http*://*bungie.net/*
 // @exclude			http*://*bungie.net/*createpost.aspx*
 // @exclude			http*://*bungie.net/Account/Playtest/*
@@ -32,6 +32,7 @@
 // FIXME:
 // - Ignore list error. Random Coups on the same page as an ignored Coup (and possibly when not on the same page too?) are removed.
 //	 Check that ignore lists are stored per user and not globally for all Bungie.net users in the browser.
+// - Options not working properly. They are saved, but not loaded nor used.
 
 //New Console
 var Console = {
@@ -871,7 +872,7 @@ var CoupDBungie = {
 	
 	Debug:true,
 	
-	Version:"5.5.4",
+	Version:"5.5.5",
 	Platform:Browser.Type.Platform(),
 	Author:"dazarobbo",
 	AuthorMemberID:2758679,
@@ -1375,16 +1376,20 @@ var MainFunctions = {
 		delete(temp);
 		var checked = 'checked="checked"';
 
-		var NotDefault = function(a) { return a && a != Styles.DEFAULT_STYLE };
-		var ShouldDo = function(a) { return NotDefault(styles[a]) && ocheckbox[a] != checked && ignoreValueExists(a) };
+		var NotDefault = function(a) { return a != undefined && a != null && a != Styles.DEFAULT_STYLE };
+		var ShouldDo = function(a) {
+			return NotDefault(styles[a]) && ocheckbox[a] != checked && ignoreValueExists(a)
+		};
 
-		var NormalizeOpacity =
-			function(prop, multi_prop) {
-				if(Options.Get('coup5ignorelist', usernameElem.text(), (multi_prop || prop), undefined) != undefined) {
-					styles[prop] = Options.Get('coup5ignorelist', usernameElem.text(), (multi_prop || prop), 1.0);
-				}
-				styles[prop] = Math.min( parseFloat(styles[prop]), Options.Get('coup5options', 'text', (multi_prop || prop), 1.0) );
-			};
+		// NormalizeOpacity :: String -> IO ()
+		var NormalizeOpacity = function(prop, multi_prop) {
+			if(Options.Get('coup5ignorelist', usernameElem.text(), (multi_prop || prop), undefined) != undefined) {
+				styles[prop] = Options.Get('coup5ignorelist', usernameElem.text(), (multi_prop || prop), 1.0);
+			}
+			const uopac = parseFloat(styles[prop]);
+			const copac = Options.Get('coup5options', 'text', (multi_prop || prop), undefined);
+			styles[prop] = copac != undefined ? copac : uopac;
+		};
 
 		//Apply gradient for Chrome, Firefox and Opera
 		var ApplyGradient =
@@ -1422,11 +1427,14 @@ var MainFunctions = {
 		}
 		//Set titlebar
 		var titlebar = $(element).find("ul.author_header_block");
-		if (ShouldDo("TitlebarBackgroundColor")) {
+		if (ShouldDo("TitlebarBackgroundColor") && ShouldDo("TitlebarBackgroundOpacity")) {
 			rgb = styles.TitlebarBackgroundColor.ToHex().ToRGB();
 			$(titlebar).css("background-color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.TitlebarBackgroundOpacity + ")");
 		} else {
 			$(titlebar).css('background-color', defaultTitlebarColor);
+		}
+		if (Options.Get('coup5options', 'text', "TitlebarBackgroundOpacity", undefined) != undefined){
+			$(titlebar).css("opacity", styles.TitlebarBackgroundOpacity);
 		}
 		if(ShouldDo("TitlebarBackgroundGradientLeft") && ShouldDo("TitlebarBackgroundGradientRight")){
 			rgb = styles.TitlebarBackgroundGradientLeft.ToHex().ToRGB();
@@ -3402,7 +3410,7 @@ var MainFunctions = {
 		SignatureLive();
 		
 		//Options text input event
-		$("#coup5options input[type='text']").live('blur', function(){
+		$("#coup5soptions input[type='text']").live('blur', function(){
 			var type = $(this).attr('type');
 			var name = $(this).attr('name');
 			Options.Add('coup5options', type, name, parseFloat($(this).val()));
@@ -3415,7 +3423,7 @@ var MainFunctions = {
 				if ( options.hasOwnProperty(group) ) {
 					for ( key in options[group] ) {
 						if ( options[group].hasOwnProperty(key) ) {
-							$('#coup5options input[type="' + group + '"][name="' + key + '"]').val(options[group][key]);
+							$('#coup5soptions input[type="' + group + '"][name="' + key + '"]').val(options[group][key]);
 						}
 					}
 				}
@@ -3424,7 +3432,7 @@ var MainFunctions = {
 				if ( options.hasOwnProperty(group) ) {
 					for ( key in options[group] ) {
 						if ( options[group].hasOwnProperty(key) ) {
-							$('#coup5options input[type="' + group + '"][name="' + key + '"]').attr('checked', 'checked');
+							$('#coup5soptions input[type="' + group + '"][name="' + key + '"]').attr('checked', 'checked');
 						}
 					}
 				}
