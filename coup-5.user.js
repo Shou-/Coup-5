@@ -32,7 +32,6 @@
 // FIXME:
 // - Ignore list error. Random Coups on the same page as an ignored Coup (and possibly when not on the same page too?) are removed.
 //	 Check that ignore lists are stored per user and not globally for all Bungie.net users in the browser.
-// - Default values are not affected by the ignorelist or option opacity values.
 
 //New Console
 var Console = {
@@ -1465,7 +1464,7 @@ var MainFunctions = {
 		} else {
 			$(titlebar).css('background-color', defaultTitlebarColor);
 		}
-		if (Options.Get('coup5options', 'text', "TitlebarBackgroundOpacity", undefined) != undefined){
+		if (["", undefined].indexOf(Options.Get('coup5options', 'text', "TitlebarBackgroundOpacity", undefined)) == -1){
 			$(titlebar).css("opacity", styles.TitlebarBackgroundOpacity);
 		}
 		if(ShouldDo("TitlebarBackgroundGradientLeft") && ShouldDo("TitlebarBackgroundGradientRight")){
