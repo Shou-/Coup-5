@@ -32,6 +32,7 @@
 // FIXME:
 // - Ignore list error. Random Coups on the same page as an ignored Coup (and possibly when not on the same page too?) are removed.
 //	 Check that ignore lists are stored per user and not globally for all Bungie.net users in the browser.
+// - Default values are not affected by the ignorelist or option opacity values.
 
 //New Console
 var Console = {
@@ -1386,39 +1387,19 @@ var MainFunctions = {
 
 		var NotDefault = function(a) { return a != undefined && a != null && a != Styles.DEFAULT_STYLE };
 		var ShouldDo = function(a) {
-			return NotDefault(styles[a]) && ocheckbox[a] != checked && ignoreValueExists(a)
-		};
+			return (NotDefault(styles[a]) && ocheckbox[a] != checked && ignoreValueExists(a)) || otext[a] != undefined;
+		}
 
 		// NormalizeOpacity :: String -> IO ()
 		var NormalizeOpacity = function(prop, multi_prop) {
 			var ivalue = Options.Get('coup5ignorelist', usernameElem.text(), (multi_prop || prop), undefined);
-			if(ivalue != undefined) {
-				var uopac = parseFloat(styles[prop]);
-				var copac = ivalue;
-				if (copac != undefined && copac.length > 0){
-					var n = parseFloat(copac.slice(1));
-					if (copac[0] == '>')
-						styles[prop] = uopac > n ? uopac : n;
-					else if (copac[0] == '<')
-						styles[prop] = uopac < n ? uopac : n;
-					else if (copac.indexOf('-') != -1){
-						var xs = copac.split('-');
-						var x = parseFloat(xs[0]);
-						var y = parseFloat(xs[1]);
-						if (x >= uopac && y <= uopac){
-							styles[prop] = uopac;
-						} else {
-							styles[prop] = Math.abs(n - x) > Math.abs(n - y) ? x : y;
-						}
-					} else {
-						styles[prop] = parseFloat(copac);
-					}
-				} else {
-					styles[prop] = uopac;
-				}
+			var copac;
+			if (ivalue != undefined) {
+				copac = ivalue;
+			} else {
+				copac = Options.Get('coup5options', 'text', (multi_prop || prop), undefined);
 			}
 			var uopac = parseFloat(styles[prop]);
-			var copac = Options.Get('coup5options', 'text', (multi_prop || prop), undefined);
 			if (copac != undefined && copac.length > 0){
 				var n = parseFloat(copac.slice(1));
 				if (copac[0] == '>')
@@ -1440,7 +1421,7 @@ var MainFunctions = {
 			} else {
 				styles[prop] = uopac;
 			}
-		};
+		}
 
 		//Apply gradient for Chrome, Firefox and Opera
 		var ApplyGradient =
@@ -1630,11 +1611,12 @@ var MainFunctions = {
 		if(ShouldDo("PostFontColor")){
 			$(element).find("div.postbody > p").css("color", "#" + styles.PostFontColor.HTMLEncode());
 		}
-		if(ShouldDo("PostFontOpacity")){
+		if (ShouldDo("PostFontOpacity")){
 			$(element).find("div.postbody > p").css("opacity", styles.PostFontOpacity);
 		}
-		if(ShouldDo("PostLinkColor")){
-			rgb = styles.PostLinkColor.ToHex().ToRGB();
+		if (ShouldDo("PostLinkOpacity")){
+			var color = styles.PostLinkColor != undefined ? styles.PostLinkColor : "71CAEF";
+			var rgb = color.ToHex().ToRGB();
 			$(element).find("div.postbody > p a").css("color", "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + styles.PostLinkOpacity + ")");
 		}
 
