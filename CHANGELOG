@@ -21,5 +21,8 @@ Changelog
 - Changed quote border to solid when the Coup-5 color for it is set.
 - Made the more opacity option affect the dividers and more button as well.
 
-5.5.5
-- Fixes a bug affecting the options.
+5.5.5:
+- Something, or something.
+
+5.5.6:
+- Added greater than, less than and range functions to ignore and option opacity options.

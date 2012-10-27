@@ -2,7 +2,7 @@
 // @name			Coup d'Bungie 5 for Firefox
 // @namespace		https://github.com/Shou-/Coup-5
 // @description		Personlize your bungie.net experience
-// @version	 		5.5.5
+// @version	 		5.5.6
 // @include			http*://*bungie.net/*
 // @exclude			http*://*bungie.net/*createpost.aspx*
 // @exclude			http*://*bungie.net/Account/Playtest/*
@@ -32,7 +32,6 @@
 // FIXME:
 // - Ignore list error. Random Coups on the same page as an ignored Coup (and possibly when not on the same page too?) are removed.
 //	 Check that ignore lists are stored per user and not globally for all Bungie.net users in the browser.
-// - Options not working properly. They are saved, but not loaded nor used.
 
 //New Console
 var Console = {
@@ -718,7 +717,10 @@ function IgnoreSpawn(username){
 						"div", {style:{height:"27px"}}, [
 							"span", null, "Post link opacity",
 							"input", {type:"text", value:1, name:"PostLinkOpacity", placeholder:"0.0 - 1.0", style:{cssFloat:"right", borderStyle:"solid", borderRadius:"2px 2px", width:"150px"}}, null
-						]
+						],
+						"span", null, "Optional special characters allowed: <, > and -.<br>Example 1 (greater than): >0.3<br>Example 2 (less than): <1.0<br>Example 3 (range): 0.3-1.0<br>Example 4 (absolute): 0.7",
+						"br", null, null,
+						"span", {id:"coup5ignorelist-error", style:"color:darkRed;"}, []
 					]
 				],
 				"div", null, [
@@ -749,7 +751,7 @@ function IgnoreSpawn(username){
 							ignoreList.splice(ignoreList.indexOf(username), 1);
 							Client.SetIgnoreList(ignoreList);
 						}
-					}}
+					}}, null
 				]
 			]
 		]
@@ -762,7 +764,7 @@ function IgnoreSpawn(username){
 	});
 	$("#coup5ignorespawn input[type='text']").each(function(){
 		var name = $(this).attr('name');
-		var jsonObj = JSON.parse(Options.Get('coup5ignorelist', username, name, 1.0));
+		var jsonObj = Options.Get('coup5ignorelist', username, name, '1.0');
 		$(this).attr('value', jsonObj);
 	});
 }
@@ -862,7 +864,13 @@ function SignatureLive(){
 	//IgnoreList text input event
 	$("#coup5ignorespawn input[type='text']").live('blur', function(){
 		var username = $("#coup5ignorespawnusername").text();
-		Options.Add('coup5ignorelist', username, $(this).attr('name'), parseFloat($(this).val()));
+		if ($(this).val().match(/^[<>]?(1(\.0)?|0\.\d+)$|^0\.\d+-(1\.0|0\.\d+)$/i) || ["", null].indexOf($(this).val()) != -1){
+			Options.Add('coup5ignorelist', username, $(this).attr('name'), $(this).val());
+			document.getElementById("coup5ignorelist-error").innerHTML = "";
+		} else {
+			var error = "Incorrect field: " + $(this).attr('name');
+			document.getElementById("coup5ignorelist-error").innerHTML = error;
+		}
 	});
 	//End IgnoreList text input event
 }
@@ -872,7 +880,7 @@ var CoupDBungie = {
 	
 	Debug:true,
 	
-	Version:"5.5.5",
+	Version:"5.5.6",
 	Platform:Browser.Type.Platform(),
 	Author:"dazarobbo",
 	AuthorMemberID:2758679,
@@ -1383,12 +1391,55 @@ var MainFunctions = {
 
 		// NormalizeOpacity :: String -> IO ()
 		var NormalizeOpacity = function(prop, multi_prop) {
-			if(Options.Get('coup5ignorelist', usernameElem.text(), (multi_prop || prop), undefined) != undefined) {
-				styles[prop] = Options.Get('coup5ignorelist', usernameElem.text(), (multi_prop || prop), 1.0);
+			var ivalue = Options.Get('coup5ignorelist', usernameElem.text(), (multi_prop || prop), undefined);
+			if(ivalue != undefined) {
+				var uopac = parseFloat(styles[prop]);
+				var copac = ivalue;
+				if (copac != undefined && copac.length > 0){
+					var n = parseFloat(copac.slice(1));
+					if (copac[0] == '>')
+						styles[prop] = uopac > n ? uopac : n;
+					else if (copac[0] == '<')
+						styles[prop] = uopac < n ? uopac : n;
+					else if (copac.indexOf('-') != -1){
+						var xs = copac.split('-');
+						var x = parseFloat(xs[0]);
+						var y = parseFloat(xs[1]);
+						if (x >= uopac && y <= uopac){
+							styles[prop] = uopac;
+						} else {
+							styles[prop] = Math.abs(n - x) > Math.abs(n - y) ? x : y;
+						}
+					} else {
+						styles[prop] = parseFloat(copac);
+					}
+				} else {
+					styles[prop] = uopac;
+				}
 			}
-			const uopac = parseFloat(styles[prop]);
-			const copac = Options.Get('coup5options', 'text', (multi_prop || prop), undefined);
-			styles[prop] = copac != undefined ? copac : uopac;
+			var uopac = parseFloat(styles[prop]);
+			var copac = Options.Get('coup5options', 'text', (multi_prop || prop), undefined);
+			if (copac != undefined && copac.length > 0){
+				var n = parseFloat(copac.slice(1));
+				if (copac[0] == '>')
+					styles[prop] = uopac > n ? uopac : n;
+				else if (copac[0] == '<')
+					styles[prop] = uopac < n ? uopac : n;
+				else if (copac.indexOf('-') != -1){
+					var xs = copac.split('-');
+					var x = parseFloat(xs[0]);
+					var y = parseFloat(xs[1]);
+					if (x >= uopac && y <= uopac){
+						styles[prop] = uopac;
+					} else {
+						styles[prop] = Math.abs(n - x) > Math.abs(n - y) ? x : y;
+					}
+				} else {
+					styles[prop] = parseFloat(copac);
+				}
+			} else {
+				styles[prop] = uopac;
+			}
 		};
 
 		//Apply gradient for Chrome, Firefox and Opera
@@ -2816,6 +2867,9 @@ var MainFunctions = {
 														]
 													]
 												],
+												"span", null, "Optional special characters allowed: <, > and -.<br>Example 1 (greater than): >0.3<br>Example 2 (less than): <1.0<br>Example 3 (range): 0.3-1.0<br>Example 4 (absolute): 0.7",
+												"br", null, null,
+												"span", {id:"coup5soptions-error", style:"color:darkRed;"}, []
 											]
 										]
 									],
@@ -3413,7 +3467,13 @@ var MainFunctions = {
 		$("#coup5soptions input[type='text']").live('blur', function(){
 			var type = $(this).attr('type');
 			var name = $(this).attr('name');
-			Options.Add('coup5options', type, name, parseFloat($(this).val()));
+			if ($(this).val().match(/^[<>]?(1(\.0)?|0\.\d+)$|^0\.\d+-(1\.0|0\.\d+)$/i) || ["", null].indexOf($(this).val()) != -1){
+				Options.Add('coup5options', type, name, $(this).val());
+				document.getElementById("coup5soptions-error").innerHTML = "";
+			} else {
+				var error = "Incorrect field: " + $(this).attr('name');
+				document.getElementById("coup5soptions-error").innerHTML = error;
+			}
 		});
 		//End options text input event
 		
