@@ -220,7 +220,7 @@ var Coup = { Debug: true
                                   , Error: 2
                                   }
                      }
-             // Key :: IO (Either Undefined String)
+             // Key :: IO Object
            , Key: function(){
                 return Browser.Memory.Get("coup5key", "{}");
              }
