@@ -1,15 +1,15 @@
 // ==UserScript==
-// @name			Mod d'Bungie
-// @namespace		https://github.com/Shou-/Coup-5
-// @description		Personlize your bungie.net experience
-// @version	 		0.108
-// @include			http*://*bungie.net/*
-// @exclude			http*://*bungie.net/*createpost.aspx*
-// @exclude			http*://*bungie.net/Account/Playtest/*
-// @exclude			http*://*bungie.net/Account/Settings.aspx*
-// @author			Shou
-// @copyright		2012, Shou
-// @license			(CC) Attribution Non-Commercial Share Alike; http://creativecommons.org/licenses/by-nc-sa/3.0/
+// @name            Mod d'Bungie
+// @namespace       https://github.com/Shou-/Coup-5
+// @description     Personlize your bungie.net experience
+// @version         0.108
+// @include         http*://*bungie.net/*
+// @exclude         http*://*bungie.net/*createpost.aspx*
+// @exclude         http*://*bungie.net/Account/Playtest/*
+// @exclude         http*://*bungie.net/Account/Settings.aspx*
+// @author          Shou
+// @copyright       2012, Shou
+// @license         (CC) Attribution Non-Commercial Share Alike; http://creativecommons.org/licenses/by-nc-sa/3.0/
 // ==/UserScript==
 
 // TODO:
