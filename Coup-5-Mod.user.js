@@ -185,11 +185,11 @@ var Browser = {
             var browser = Browser.Type.Get();
 
             if (browser === "webkit")
-                return "https://github.com/downloads/Shou-/Coup-5/Coup-5-Chrome.crx";
+                return "https://github.com/downloads/Shou-/Coup-5/Coup-5-Mod-Chrome.crx";
             else if (browser === "opera")
-                return "https://github.com/downloads/Shou-/Coup-5/Coup-5-Opera.zip";
+                return "https://github.com/downloads/Shou-/Coup-5/Coup-5-Mod-Opera.zip";
             else
-                return "https://github.com/Shou-/Coup-5/raw/master/coup-5.user.js";
+                return "https://github.com/Shou-/Coup-5/raw/master/Coup-5-Mod.user.js";
         },
         Platform:function(){
             var browser = Browser.Type.Get();
