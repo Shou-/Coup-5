@@ -286,6 +286,46 @@ function listToMaybe(xs){
 
 // }}}
 
+// {{{ Either
+
+function Right(x){
+    this.Right = x;
+}
+
+function Left(x){
+    this.Left = x;
+}
+
+// isRight :: Either a b -> Bool
+function isRight(e){
+    if ("Right" in e) return true;
+    else return false;
+}
+
+// isLeft :: Either a b -> Bool
+function isLeft(e){
+    if ("Left" in e) return true;
+    else return false;
+}
+
+// fromRight :: Either a b -> b
+function fromRight(e){
+    return e.Right;
+}
+
+// fromLeft :: Either a b -> b
+function fromLeft(e){
+    return e.Left;
+}
+
+// either :: (a -> c) -> (b -> c) - Either a b -> c
+function either(f, g, e){
+    if (isRight(e)) return g(fromRight(e));
+    else if (isLeft(e)) return f(fromLeft(e));
+}
+
+// }}}
+
 // {{{ Styles
 
 var emptyStyles = (new Publish (
@@ -1075,13 +1115,22 @@ function mkStyler(tree){
                         msg.textContent = "Server error: " + o.Reason;
                         msg.style.color = "#960050";
                     }
+                    msg.textContent = [ "Setting validation string and getting"
+                                      , "MemberId..."
+                                      ].join(' ');
+                    msg.style.color = "#c47f2c";
                     setValidationString();
                     getMemberId();
 
-                    var checker = setInterval(function(){
+                    var idchecker = setInterval(function(){
                         var mid = Coup.MemberId();
                         maybe(null, function(id){
-                            clearInterval(checker);
+                            clearInterval(idchecker);
+                            msg.textContent = [ "MemberId received"
+                                              , "(" + id + "),"
+                                              , "attempting to register..."
+                                              ].join(' ');
+                            msg.style.color = "#c47f2c";
                             var obj;
                             if (newuser) obj = new Register(id);
                             else obj = new FetchKey(id);
@@ -1093,12 +1142,36 @@ function mkStyler(tree){
                             Browser.Memory.Delete("Coup5MemberId");
                         }, mid);
                     }, 108); // moro!!
+                    var vschecker = setInterval(function(){
+                        var uvs = Browser.Memory.Get( "Coup5ValidationBool"
+                                                    , "{}"
+                                                    );
+                        maybe(null, function(evs){
+                            either(function(s){
+                                clearInterval(vschecker);
+                                msg.textContent = s;
+                                msg.style.color = "#960050";
+                            }, function(s){
+                                clearInterval(vschecker);
+                                msg.textContent = s;
+                                msg.style.color = "#c47f2c";
+                            }, evs);
+                        }, maybeParse(uvs));
+                    }, 108);
                     setTimeout(function(){
-                        clearInterval(checker);
+                        clearInterval(idchecker);
+                        clearInterval(vschecker);
                         var e = document.getElementById("Coup5ValidationFrame");
                         e.parentNode.removeChild(e);
+                        if (!Browser.Memory.Get("Coup5ValidationBool", false)){
+                            msg.textContent =
+                                "Automatic registration timed out.";
+                            msg.style.color = "#960050";
+                            //manualRegistration();
+                        }
                         Browser.Memory.Delete("Coup5ValidationString");
-                    }, 10000);
+                        Browser.Memory.Delete("Coup5ValidationBool");
+                    }, 20000);
                 }
                 var mid = Coup.MemberId();
                 var obj;
@@ -1114,6 +1187,8 @@ function mkStyler(tree){
                     Console.Log("FetchKey: " + Coup.Username());
                     if (newuser) obj = new Register(Coup.Username());
                     else obj = new FetchKey(Coup.Username());
+                    msg.textContent = "Requesting validation string...";
+                    msg.style.color = "#c47f2c";
                     SendPost(obj, f);
                 }
             });
@@ -1233,11 +1308,14 @@ function mkStyler(tree){
     var td1 = document.createElement("td");
     var td2 = document.createElement("td");
     var submit = document.createElement("input");
+    var pubstatus = document.createElement("div");
     td1.textContent = "Collapse all";
     trheader.style.cursor = "pointer";
     trheader.style.borderBottom = "1px solid #d0d0d0";
     submit.type = "submit";
     submit.value = "Submit";
+    pubstatus.id = "Coup5PublishStatus";
+    pubstatus.style.cursor = "pointer";
     trheader.addEventListener("click", function(){
         var toggler = this;
         var toggleNext = function(e){
@@ -1253,6 +1331,9 @@ function mkStyler(tree){
         }
         toggleNext(this);
     });
+    pubstatus.addEventListener("click", function(){
+        this.textContent = "";
+    });
     trheader.appendChild(td1);
     trheader.appendChild(td2);
     ui.appendChild(trheader);
@@ -1260,6 +1341,7 @@ function mkStyler(tree){
     traverse([], recurse, tree);
 
     ui.appendChild(submit);
+    ui.appendChild(pubstatus);
     ui.style.width = "100%";
     ui.style.borderSpacing = "0";
 
@@ -1680,75 +1762,7 @@ function mkPublish(){
 
     form.addEventListener("submit", function(e){
         e.preventDefault();
-        Console.Log("Publishing styles...");
-
-        var o = new Publish( Coup.Username("")
-                           , fromJust(Coup.Key())
-                           , {}
-                           , {}
-                           , {}
-                           , {}
-                           );
-        var trs = document.getElementById("Coup5UI").getElementsByTagName("tr");
-        for (var i = 0; i < trs.length; i++){
-            var val;
-            var inp = trs[i].children[1].children[0];
-            if (inp === undefined) continue;
-            var obj = {};
-            var keys = trs[i].children[0].textContent.split(' ');
-            switch(inp.className){
-                case "Show": val = parseBool(getSelectedValue(inp)); break;
-                case "Text": val = inp.value; break;
-                case "Color":
-                    val = inp.value ? inp.value : null;
-                    break;
-                case "Opacity": val = parseFloat(inp.value); break;
-                case "Image": val = inp.value; break;
-                case "GradientLeft":
-                    val = inp.value ? inp.value : null;
-                    break;
-                case "GradientRight":
-                    val = inp.value ? inp.value : null;
-                    break;
-                case "Style": val = getSelectedValue(inp); break;
-                case "RemoveBars":
-                    val = parseBool(getSelectedValue(inp));
-                    break;
-                case "ImageRepeat": val = getSelectedValue(inp); break;
-                case "ImageAttachment": val = getSelectedValue(inp); break;
-                case "ImagePosition": val = inp.value; break;
-                case "Font": val = getSelectedValue(inp); break;
-                case "BackgroundColor": val = inp.value; break;
-                default: val = undefined;
-            }
-            Console.Log( keys.join(' ') + ": " + (i + 1) +  " of " + trs.length
-                         + " with " + val
-                       );
-            var f = function(ks, ob){
-                if (ks.length > 1){
-                    ob[ks[0]] = f(ks.splice(1), {});
-                    return ob;
-                } else {
-                    ob[ks[0]] = val;
-                    return ob;
-                }
-            }
-            if (val !== undefined) o = merge(f(["Data"].concat(keys), obj), o);
-        }
-        var bgs = [];
-        for (k in o.Data.Post.Backgrounds) bgs.push(o.Data.Post.Backgrounds[k]);
-        o.Data.Post.Backgrounds = bgs;
-        Console.Log("Publish styles: " + JSON.stringify(o));
-        SendPost(o, function(str){
-            maybe(null, function(obj){
-                if (obj.Status === 1){
-                    delete o.Data.Key;
-                    Coup.Cache.Add(o.Data);
-                    Console.Log("Publish success!");
-                }
-                else Console.Log(obj.Reason);
-            }, maybeParse(str));
-        });
+        publishStyles();
     });
 
     return form;
@@ -1887,13 +1901,25 @@ function insertUI(){
     } else if ( window.location.pathname.match(/Account\/Settings\.aspx/i)
                 && window.location.hash.match("#Coup5Register")){
         Console.Log("insertUI: Adding Settings UI.");
+        var rp = document.getElementById(
+            "ctl00_mainContent_LoadStatsPageForEmblemLabel"
+        );
         var hp = document.getElementById("ctl00_mainContent_bHomepage");
         var vs = Coup.ValidationString();
-        if (vs !== ""){
+        var right = new Right("Validation string set...");
+        if (rp !== null) Browser.Memory.Set("Coup5ValidationBool"
+                                                , JSON.stringify(right)
+                                                );
+        else if (vs !== ""){
             hp.value = "http://" + vs + ".com/";
-            var btn = document.getElementById("ctl00_mainContent_bEditProfileButton2");
+            var btn = document.getElementById(
+                "ctl00_mainContent_bEditProfileButton2"
+            );
             triggerMouseEvent("click", btn);
-        } else Console.Log("Settings Register: No validation string.");
+        } else {
+            var left = new Left("Error: no validation string stored.");
+            Browser.Memory.Set("Coup5ValidationBool", JSON.stringify(left));
+        }
         Console.Log("Successfully added UI.");
     } else if ( window.location.pathname.match(/Search\/default\.aspx/i)
                 && window.location.search.match(/\?q=\S+?\&g=5/i)
@@ -1923,9 +1949,9 @@ function styleUI(){
 function setValidationString(){
     var frame = document.createElement("iframe");
     frame.src = "/Account/Settings.aspx#Coup5Register";
-    frame.width = 0;
-    frame.height = 0;
-    frame.style.opacity = 0;
+    frame.width = 640;
+    frame.height = 480;
+    frame.style.opacity = 1;
     frame.id = "Coup5ValidationFrame";
     document.getElementById("Coup5UI").appendChild(frame);
 }
@@ -1942,6 +1968,7 @@ function getMemberId(){
     document.getElementById("Coup5UI").appendChild(frame);
 }
 
+// TODO: less trys and more Maybe.
 // storeKey :: String -> IO ()
 function storeKey(s){
     var o;
@@ -1970,11 +1997,93 @@ function storeKey(s){
                               ].join(' ');
             msg.style.color = "#66aa11";
         } catch(e){
-            Console.Log("Checker: " + e);
+            Console.Log("storeKey: " + e);
         }
-    } else Console.Log("Checker: " + o.Reason);
+    } else {
+        msg.textContent = o.Reason;
+        msg.style.color = "#960050";
+    }
 }
 
+// }}}
+
+// {{{ Publishing
+function publishStyles(){
+    var msg = document.getElementById("Coup5PublishStatus");
+    msg.textContent = "Publishing styles...";
+    msg.style.color = "#c47f2c";
+
+    var o = new Publish( Coup.Username("")
+                       , fromJust(Coup.Key())
+                       , {}
+                       , {}
+                       , {}
+                       , {}
+                       );
+    var trs = document.getElementById("Coup5UI").getElementsByTagName("tr");
+    for (var i = 0; i < trs.length; i++){
+        var val;
+        var inp = trs[i].children[1].children[0];
+        if (inp === undefined) continue;
+        var obj = {};
+        var keys = trs[i].children[0].textContent.split(' ');
+        switch(inp.className){
+            case "Show": val = parseBool(getSelectedValue(inp)); break;
+            case "Text": val = inp.value; break;
+            case "Color":
+                val = inp.value ? inp.value : null;
+                break;
+            case "Opacity": val = parseFloat(inp.value); break;
+            case "Image": val = inp.value; break;
+            case "GradientLeft":
+                val = inp.value ? inp.value : null;
+                break;
+            case "GradientRight":
+                val = inp.value ? inp.value : null;
+                break;
+            case "Style": val = getSelectedValue(inp); break;
+            case "RemoveBars":
+                val = parseBool(getSelectedValue(inp));
+                break;
+            case "ImageRepeat": val = getSelectedValue(inp); break;
+            case "ImageAttachment": val = getSelectedValue(inp); break;
+            case "ImagePosition": val = inp.value; break;
+            case "Font": val = getSelectedValue(inp); break;
+            case "BackgroundColor": val = inp.value; break;
+            default: val = undefined;
+        }
+        Console.Log( keys.join(' ') + ": " + (i + 1) +  " of " + trs.length
+                     + " with " + val
+                   );
+        var f = function(ks, ob){
+            if (ks.length > 1){
+                ob[ks[0]] = f(ks.splice(1), {});
+                return ob;
+            } else {
+                ob[ks[0]] = val;
+                return ob;
+            }
+        }
+        if (val !== undefined) o = merge(f(["Data"].concat(keys), obj), o);
+    }
+    var bgs = [];
+    for (k in o.Data.Post.Backgrounds) bgs.push(o.Data.Post.Backgrounds[k]);
+    o.Data.Post.Backgrounds = bgs;
+    Console.Log("Publish styles: " + JSON.stringify(o));
+    SendPost(o, function(str){
+        maybe(null, function(obj){
+            if (obj.Status === 1){
+                delete o.Data.Key;
+                Coup.Cache.Add(o.Data);
+                msg.textContent = "Publish success!";
+                msg.style.color = "#66aa11";
+            } else {
+                msg.textContent = obj.Reason;
+                msg.style.color = "#960050";
+            }
+        }, maybeParse(str));
+    });
+}
 // }}}
 
 // main :: IO ()
