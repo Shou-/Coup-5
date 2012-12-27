@@ -20,29 +20,32 @@
 // - Coup saving.
 //      - Coup style exporting and importing.
 // - Improved UI (minimalist, collapse, convenience).
-//      - About page.
 //      - Report page.
+//          - Too many people do not know about the report button in signatures.
 // - Cache
 //      - Works as expected?
 // - Ignore list
-//      - Whitelisting.
 //      - "Permanent cache"
+//          - Make sure this works now.
 //      - Make a generic function for both the cache and ignore list instead of
 //        two that do the same thing with different keys.
-// - Updater?
+// - Updater
 // - Registration
 //      - Make sure it is fail-safe.
-//          - On Settings page check for save message and store something in
-//            localStorage then check with interval.
+//          - Fallback to manual registration.
 // - Reporting
-// - Sanitize input
-//      - Publishing?
-// - Clean codebase.
-//      - Not done yet!
+// - Publishing
+//      - Merge objects properly so all inputs appear
+//      - Color wheel
+//      - Adding layers
+// - Clean codebase
+//      - Find /TODO, /XXX and /FIXME comments
+// - Replace alerts and prompts with mkFloaters
 
 // XXX:
 
 // FIXME:
+// - More button not affected by opacity.
 
 // Vim:
 // :set expandtab
@@ -99,6 +102,7 @@ function elem(x, xs){
     return b;
 }
 
+// | Similarities of two lists.
 // intersect :: [a] -> [a] -> [a]
 function intersect(xs, ys){
     var tmp = [];
@@ -106,11 +110,21 @@ function intersect(xs, ys){
     return tmp;
 }
 
+// | Difference of two lists.
 // listDiff :: [a] -> [a] -> [a]
 function listDiff(xs, ys){
     var tmp = [];
     for (var i = 0; i < xs.length; i++) if (!elem(xs[i], ys)) tmp.push(xs[i]);
+    for (var i = 0; i < ys.length; i++) if (!elem(ys[i], xs)) tmp.push(ys[i]);
     return tmp;
+}
+
+// | Unique elements of two lists.
+// union :: [a] -> [a] -> [a]
+function union(xs, ys){
+    for (var i = 0; i < ys.length; i++)
+        if (!elem(ys[i], xs)) xs.push(ys[i]);
+    return xs;
 }
 
 // getPOSIXTime :: IO Int
@@ -122,7 +136,7 @@ function getPOSIXTime(){
 function id(x){ return x; }
 
 // filter :: [a] -> (a -> Bool) -> [a]
-function filter(xs, f){
+function filter(f, xs){
     var tmp = [];
     for (var i = 0; i < xs.length; i++) if (f(xs[i])) tmp.push(xs[i]);
     return tmp;
@@ -145,7 +159,7 @@ function toRGB(n){
     return { R:r, G:g, B:b }
 }
 
-// insert :: (Obj -> Bool) -> a -> [Obj] -> [Obj]
+// insert :: (Obj -> Bool) -> a -> [a] -> [a]
 function insert(f, a, o){
     var b = false;
     for (var i = 0; i < o.length; i++){
@@ -187,15 +201,21 @@ function traverse(ks, f, tree){
     return tree;
 }
 
-// speedcore :: String -> Obj -> [Obj]
+// | No more Flydom!
+// speedcore :: String -> Obj -> Tree -> DOMObj
 function speedcore(tagname, attrs, childs){
     var e = document.createElement(tagname);
-    for (k in attrs) e[k] = attrs[k];
-    for (var i = 0; i < childs.length; i + 3){
+    for (k in attrs){
+        if (typeof attrs[k] === "object")
+            for (l in attrs[k])
+                e[k][l] = attrs[k][l];
+        else e[k] = attrs[k];
+    }
+    for (var i = 0; i < childs.length; i = i + 3){
         var el = speedcore( childs[i]
                           , childs[i + 1]
                           , childs[i + 2]
-                          )
+                          );
         e.appendChild(el);
     }
     return e;
@@ -328,6 +348,8 @@ function either(f, g, e){
 
 // {{{ Styles
 
+var eitherStyles = new Left(null);
+
 var emptyStyles = (new Publish (
       null
     , null
@@ -458,12 +480,12 @@ var Browser = {
         }
     },
     SupportsCoupDBungie:function(){
-        Console.Log("Determining whether browser supports Coup-5-Mod");
+        Console.Log("Determining whether browser supports Coup-5");
         if(localStorage && XMLHttpRequest && JSON){
-            Console.Log("Browser supports Coup-5-Mod");
+            Console.Log("Browser supports Coup-5");
             return true;
         }
-        Console.Log("Browser does not support Coup-5-Mod");
+        Console.Log("Browser does not support Coup-5");
         return false;
     },
     XHR:function(method, url, async, headers, onload, onerror, onreadystatechange){
@@ -479,11 +501,11 @@ var Browser = {
             var browser = Browser.Type.Get();
 
             if (browser === "webkit")
-                return "https://github.com/downloads/Shou-/Coup-5/Coup-5-Mod-Chrome.crx";
+                return "https://github.com/downloads/Shou-/Coup-5/Coup-5-Chrome.crx";
             else if (browser === "opera")
-                return "https://github.com/downloads/Shou-/Coup-5/Coup-5-Mod-Opera.zip";
+                return "https://github.com/downloads/Shou-/Coup-5/Coup-5-Opera.zip";
             else
-                return "https://github.com/Shou-/Coup-5/raw/master/Coup-5-Mod.user.js";
+                return "https://github.com/Shou-/Coup-5/raw/master/Coup-5.user.js";
         },
         Platform:function(){
             var browser = Browser.Type.Get();
@@ -554,26 +576,45 @@ var Coup = { Debug: true
                 return mi;
              }
            , Ignore: { List: function(){
-                        var tmp = Browser.Memory.Get(this.Key, "[]");
-                        try {
-                            return JSON.parse(tmp);
-                        } catch(e){
-                            Console.Log("Coup.Ignore.List: " + e);
-                            return [];
-                        }
+                        var tmp = Browser.Memory.Get(this.Key, "{}");
+                        return maybe([], function(o){
+                            if ("List" in o) return o.List;
+                            else return [];
+                        }, maybeParse(tmp));
+                       }
+                     , Mode: function(){
+                        var tmp = Browser.Memory.Get(this.Key, "{}");
+                        return maybe(0, function(o){
+                            if ("Mode" in o) return o.Mode;
+                            else return 0;
+                        }, maybeParse(tmp));
                        }
                      , Add: function(style){
                         var list = this.List();
+                        var mode = this.Mode();
                         var f = function(o){
                             return (o["Username"] === style.Username);
                         }
-                        list = JSON.stringify(insert(f, style, list));
-                        Browser.Memory.Set(this.Key, list);
+                        var o = { Mode: mode, List: insert(f, style, list) }
+                        Browser.Memory.Set(this.Key, JSON.stringify(o));
                        }
                      , Rem: function(username){
                         var list = this.List();
                         delete list[username];
                         Browser.Memory.Set(this.Key, list);
+                       }
+                     , Names: function(){
+                        var inames = [];
+                        var ilist = this.List();
+                        for (var i = 0; i < ilist.length; i++)
+                            inames.push(ilist[i].Username);
+                        return inames;
+                       }
+                     , Filter: function(names){
+                        var inames = this.Names();
+                        var imode = this.Mode();
+                        if (imode !== 2) return listDiff(inames, names);
+                        else return intersect(names, inames);
                        }
                      , Key: "Coup5Ignore"
                      }
@@ -617,7 +658,7 @@ var Coup = { Debug: true
                             Console.Log("Coup.Cache.Autoclear: Cache cleared.");
                         }
                       }
-                    , Usernames: function(){
+                    , Names: function(){
                         var list = this.List();
                         var tmp = [];
                         for (var i = 0; i < list.length; i++)
@@ -628,6 +669,36 @@ var Coup = { Debug: true
                     , Key: "Coup5Cache"
                     , TimeKey: "Coup5CacheTime"
                     }
+           , Styles: { List: function(){
+                        var tmp = Browser.Memory.Get(this.Key, "[]");
+                        return maybe([], function(o){
+                            return o;
+                        }, maybeParse(tmp));
+                       }
+                     , Add: function(name, style){
+                        var list = this.List();
+                        list = insert(function(x){
+                            return x === name;
+                        }, style, list);
+                        Browser.Memory.Set(this.Key, JSON.stringify(list));
+                       }
+                     , Rem: function(name){
+                        var list = this.List();
+                        list = filter(function(x){
+                            return !x === name;
+                        }, list);
+                        Browser.Memory.Set(this.Key, JSON.stringify(list));
+                       }
+                     , Remi: function(index){
+                        var list = this.List();
+                        var tmp = [];
+                        for (var i = 0; i < list.length; i++)
+                            if (i !== index)
+                                tmp.push(list[i]);
+                        Browser.Memory.Set(this.Key, JSON.stringify(tmp));
+                       }
+                     , Key: "Coup5Styles"
+                     }
            }
 
 // }}}
@@ -887,7 +958,7 @@ function User(u, i){
 
 // {{{ Style
 var style = "\
-#Coup5 form input, #Coup5 form select {\
+#Coup5 input, #Coup5 select {\
     background-color: #1b1d1f;\
     color: #b0b0b0;\
     border: 1px solid #707070;\
@@ -896,8 +967,8 @@ var style = "\
     margin: 4px;\
 }\
 \
-#Coup5 form input[type='submit']:hover, #Coup5 form select:hover,\
-#Coup5 form input[type='button']:hover {\
+#Coup5 input[type='submit']:hover, #Coup5 select:hover,\
+#Coup5 input[type='button']:hover {\
     background-color: #17668a;\
     border: 1px solid #56aacd;\
     cursor: pointer;\
@@ -910,6 +981,7 @@ ul.leftside { height: auto !important }\
     cursor: pointer;\
     display: table-cell;\
     text-align: center;\
+    padding: 1px 0px;\
 }\
 \
 .Coup5Tab:hover {\
@@ -926,6 +998,36 @@ ul.leftside { height: auto !important }\
 \
 #Coup5UI tr {\
     height: 27px;\
+}\
+\
+#Coup5Publish tr td{\
+    width: 50%;\
+}\
+\
+#Coup5AboutBanner {\
+    height: 58px;\
+    text-shadow: 0px 0px 1px #000;\
+    font-size: 37px;\
+    color: #FFF;\
+    text-align: center;\
+    line-height: 1.5;\
+    margin-bottom: 7px;\
+}\
+\
+#Coup5AboutText, #Coup5AboutText p {\
+    color: #FCFCFC;\
+    text-shadow: 0px 0px 1px #000;\
+    float: none;\
+    margin: 0px;\
+}\
+\
+.spoiler {\
+    background-color: black;\
+    color: transparent;\
+}\
+\
+.spoiler:hover {\
+    color: white;\
 }\
 ";
 // }}}
@@ -1001,6 +1103,7 @@ function mkStyler(tree){
                        , "inset"
                        , "outset"
                        ]
+            input.style.borderStyle = a;
             for (var i = 0; i < vals.length; i++){
                 var e = document.createElement("option");
                 e.textContent = vals[i];
@@ -1008,6 +1111,9 @@ function mkStyler(tree){
                 if (vals[i] === a) e.selected = true;
                 input.appendChild(e);
             }
+            input.addEventListener("change", function(){
+                this.style.borderStyle = getSelectedValue(this);
+            });
         } else if ("ImageRepeat" === curtes){
             input = document.createElement("select");
             var vals = ["repeat", "repeat-x", "repeat-y", "no-repeat"];
@@ -1045,6 +1151,7 @@ function mkStyler(tree){
                 var e = document.createElement("option");
                 e.textContent = vals[i];
                 e.value = vals[i];
+                e.style.fontFamily = vals[i];
                 if (vals[i] === a) e.selected = true;
                 input.appendChild(e);
             }
@@ -1096,6 +1203,16 @@ function mkStyler(tree){
             msg.style.cursor = "pointer";
             msg.title = "Click here to hide this text";
 
+            register.addEventListener("mouseover", function(){
+                msg.textContent = [ "Warning: This will change your user"
+                                  , "homepage link. Make sure to copy it if"
+                                  , "it's an important link."
+                                  ].join(' ');
+                msg.style.color = "#c47f2c";
+            });
+            register.addEventListener("mouseout", function(){
+                msg.textContent = "";
+            });
             register.addEventListener("click", function(){
                 var newuser = false;
                 if (regtype.children[0].selected) newuser = true;
@@ -1205,12 +1322,16 @@ function mkStyler(tree){
                    , "BackgroundColor"
                    , "GradientLeft"
                    , "GradientRight"
-                   , "ImagePosition" ].indexOf(curtes) != -1){
+                   ].indexOf(curtes) != -1){
             input = document.createElement("input");
             input.value = a;
+            input.style.backgroundColor = '#' + a;
             input.addEventListener("change", function(){
-                //
+                this.style.backgroundColor = '#' + a;
             });
+        } else if ("ImagePosition" === curtes){
+            input = document.createElement("input");
+            input.value = a;
         } else {
             input = document.createElement("td");
             title.colspan = "2";
@@ -1244,11 +1365,13 @@ function mkStyler(tree){
 
             bgsadd.type = "button";
             bgsadd.value = "add layer";
+            td1.style.borderBottom = "1px solid #d0d0d0";
+            td2.style.borderBottom = "1px solid #d0d0d0";
             bgsadd.addEventListener("click", function(){
                 var i = 0;
                 var exists = true;
                 while (exists){
-                    var e = document.getElementsByClassName(i + 1);
+                    var e = document.getElementsByClassName(i);
                     if (e === null) exists = false;
                     else i++;
                 }
@@ -1264,7 +1387,8 @@ function mkStyler(tree){
                 //recurse(["Post", "Background", '' + i], obj);
             });
 
-            bgswrap.appendChild(bgsadd);
+            td1.appendChild(bgsadd);
+            bgswrap.appendChild(td1);
             bgswrap.appendChild(td2);
             ui.appendChild(bgswrap);
         }
@@ -1297,6 +1421,22 @@ function mkStyler(tree){
         input.className = curtes;
 
         if (["Titlebar", "Post", "Backgrounds", ""].indexOf(curtes) == -1){
+            if (input.tagName === "SELECT")
+                input.addEventListener("dblclick", function(){
+                    var custom = document.createElement("input");
+                    var select = document.createElement("select");
+                    custom.focus();
+                    custom.addEventListener("blur", function(){
+                        var option = document.createElement("option");
+                        option.value = this.value;
+                        option.textContent = this.value;
+                        select.appendChild(option);
+                        this.parentNode.appendChild(select);
+                        this.parentNode.removeChild(this);
+                    });
+                    this.parentNode.appendChild(custom);
+                    this.parentNode.removeChild(this);
+                });
             inputd.appendChild(input);
             wrap.appendChild(title);
             wrap.appendChild(inputd);
@@ -1307,15 +1447,9 @@ function mkStyler(tree){
     var trheader = document.createElement("tr");
     var td1 = document.createElement("td");
     var td2 = document.createElement("td");
-    var submit = document.createElement("input");
-    var pubstatus = document.createElement("div");
     td1.textContent = "Collapse all";
     trheader.style.cursor = "pointer";
     trheader.style.borderBottom = "1px solid #d0d0d0";
-    submit.type = "submit";
-    submit.value = "Submit";
-    pubstatus.id = "Coup5PublishStatus";
-    pubstatus.style.cursor = "pointer";
     trheader.addEventListener("click", function(){
         var toggler = this;
         var toggleNext = function(e){
@@ -1331,17 +1465,12 @@ function mkStyler(tree){
         }
         toggleNext(this);
     });
-    pubstatus.addEventListener("click", function(){
-        this.textContent = "";
-    });
     trheader.appendChild(td1);
     trheader.appendChild(td2);
     ui.appendChild(trheader);
 
     traverse([], recurse, tree);
 
-    ui.appendChild(submit);
-    ui.appendChild(pubstatus);
     ui.style.width = "100%";
     ui.style.borderSpacing = "0";
 
@@ -1371,6 +1500,7 @@ function stylePost(s, o){
     // Avatar
     if ("Avatar" in s){
         avatar = o.children[1].children[0].children[0];
+        avatar.title = s.Username;
         if ("Image" in s.Avatar)
             avatar.src = s.Avatar.Image;
         if ("Opacity" in s.Avatar)
@@ -1386,12 +1516,12 @@ function stylePost(s, o){
             }
         }
     }
-
     // Titlebar
     if ("Titlebar" in s){
         titlebar = o.children[2].children[0]
         if ("Username" in s.Titlebar){
             var username = titlebar.children[0].children[0];
+            username.title = s.Username;
             if ("Show" in s.Titlebar.Username)
                 if (!s.Titlebar.Username.Show)
                     username.style.display = "none";
@@ -1612,32 +1742,44 @@ function stylePost(s, o){
     }
 }
 
+// getStyles :: Response Styles -> [Style]
+function getStyles(r){
+    return maybe([], function(o){
+        if (o.Status === 1) return o.Users;
+        else return [];
+    }, maybeParse(r));
+}
+
+
 // applyStyles :: Response Styles -> IO ()
-function applyStyles(r){
-    try {
-        r = JSON.parse(r);
-    } catch(e){
-        Console.Log("applyStyles: JSON parse error.");
+function applyStyles(styles){
+    // Add server loaded styles to cache.
+    for (var i = 0; i < styles.length; i++){
+        Coup.Cache.Add(styles[i]);
     }
-    if (r.Status == 1){
-        // Add server loaded styles to cache.
-        for (var i = 0; i < r.Users.length; i++){
-            Coup.Cache.Add(r.Users[i]);
-        }
-        var cs = Coup.Cache.List();
-        var logins = document.getElementsByClassName("login");
-        // Style posts.
-        for (var i = 0; i < cs.length; i++){
-            for (var j = 0; j < logins.length; j++){
-                var username = logins[j].textContent;
-                if (cs[i]["Username"] === username){
-                    var post = logins[j].parentNode.parentNode.parentNode;
-                    stylePost(cs[i], post);
-                }
+    var cs = Coup.Cache.List();
+    var is = Coup.Ignore.List();
+    var inames = Coup.Ignore.Names();
+    var im = Coup.Ignore.Mode();
+    var logins = document.getElementsByClassName("login");
+    // Style posts.
+    for (var i = 0; i < logins.length; i++){
+        var username = logins[i].textContent;
+        var post = logins[i].parentNode.parentNode.parentNode;
+        for (var j = 0; j < cs.length; j++){
+            var b;
+            if (im === 2) b = elem(username, inames);
+            else b = !elem(username, inames);
+            if (cs[j]["Username"] === username && b){
+                stylePost(cs[j], post);
             }
         }
+        if (im === 0){
+            for (var j = 0; j < is.length; j++)
+                if (is[i].Username === username)
+                    stylePost(is[i], post);
+        }
     }
-    else Console.Log(r.Reason);
 }
 
 // }}}
@@ -1645,20 +1787,28 @@ function applyStyles(r){
 // {{{ Makers
 
 // mkPost :: IO DOMObj
-function mkPost(){
+function mkPost(username){
     var e = speedcore(
-        "span", {}, [
-            "div", { className: "forumpost" }, [
+        "span", { style: { marginLeft: "-17px"
+                         , display: "block"
+                         , backgroundColor: "#1B1D1F"
+                         , minWidth: "670px"
+                         , overflow: "hidden"
+                         , position: "relative"
+                         , boxShadow: "0 0 4px #000"
+                         }
+                }, [
+            "div", { className: "forumpost", style: { width: "670px" } }, [
                 "div", { className: "clear" }, [],
                 "div", { className: "forumavatar" }, [
-                    "a", { href: "http://#" }, [
+                    "a", { href: "javascript:;" }, [
                         "img", { src: "http://#" }, []
                     ]
                 ],
                 "div", { className: "postbody" }, [
                     "ul", { className: "author_header_block" }, [
                         "li", { className: "login" }, [
-                            "a", { textContent: Coup.Username()
+                            "a", { textContent: username
                                  , href: "/Account/Profile.aspx"
                                  }, [],
                         ],
@@ -1685,12 +1835,50 @@ function mkPost(){
                             "a", { href: "/Account/Profile.aspx?act=msg" }, []
                         ]
                     ],
+                    "div", { className: "floatingprofile" }, [],
                     "p", {}, [
-                        "span", { className: "IBBquotedtable" }, [
+                        "span", { className: "IBBquotedtable"
+                                , style: { width: "529px" } }, [
                             "b", { textContent: "Posted by: " }, [],
                             "span", { textContent: "Anonymous" }, [],
                             "br", {}, [],
-                            "span",  { textContent: "tfw no gf" }, []
+                            "span",  { textContent: "tfw no bf" }, []
+                        ],
+                        "span", { textContent: "tfw no gf" }, []
+                    ]
+                ],
+                "div", { className: "post-actions" }, [
+                    "ul", {}, [
+                        "li", { className: "date"
+                              , textContent: "07.07.2077 7:07 PM PST"
+                              }, [],
+                        "li", { style: { cssFloat: "right" } }, [
+                            "a", { className: "forum_post_reply_button" }, [
+                                "img", { width: 52
+                                       , height: 20
+                                       , style: { "_height": "17px" }
+                                       , src: "/images/spacer.gif"
+                                       , alt: "reply"
+                                       }, []
+                            ],
+                            "a", { className: "forum_post_edit_button" }, [
+                                "img", { width: 43
+                                       , height: 20
+                                       , style: { "_height": "17px" }
+                                       , src: "/images/spacer.gif"
+                                       , alt: "edit"
+                                       }, []
+                            ],
+                            "a", {}, [
+                                "img", { width: 104
+                                       , height: 20
+                                       , src: "/images/spacer.gif"
+                                       , alt: "unleash ninjas"
+                                       }, []
+                            ]
+                        ],
+                        "li", {}, [
+                            "span", {}, []
                         ]
                     ]
                 ]
@@ -1743,22 +1931,148 @@ function mkFloater(id){
 // mkPublish :: IO DOMObj
 function mkPublish(){
     var form = document.createElement("form");
-    SendPost( new GetStyles(false, [ new User(Coup.Username(), 0)  ])
-            , function(s){
-                maybe(null, function(o){
-                    var obj = o.Users[0];
-                    maybe(null, function(key){
-                        obj = merge(obj, emptyStyles);
-                        obj = merge({ Key: key }, obj);
-                        obj = merge(obj, { Register: undefined });
-                        delete obj.Username;
-                    }, Coup.Key());
-                    delete obj.Id;
-                    Console.Log(JSON.stringify(obj));
-                    form.appendChild(mkStyler(obj));
-                }, maybeParse(s));
-              }
-            );
+    form.id = "Coup5Publish";
+    var f = function(s){
+        maybe(null, function(o){
+            var obj = o.Users[0];
+            maybe(null, function(key){
+                obj = merge(obj, emptyStyles);
+                obj = merge({ Key: key }, obj);
+                obj = merge(obj, { Register: undefined });
+                delete obj.Username;
+            }, Coup.Key());
+            delete obj.Id;
+            Console.Log(JSON.stringify(obj));
+            form.appendChild(mkStyler(obj));
+
+            var submit = document.createElement("input");
+            var save = document.createElement("input");
+            var imp = document.createElement("input");
+            var pubstatus = document.createElement("div");
+            var styles = document.createElement("div");
+            submit.type = "submit";
+            submit.value = "Submit";
+            save.type = "button";
+            save.value = "Save style";
+            imp.type = "button";
+            imp.value = "Import style";
+            pubstatus.id = "Coup5PublishStatus";
+            pubstatus.style.cursor = "pointer";
+
+            save.addEventListener("click", function(){
+                var o = gatherStyles("Coup5UI");
+                o.Username = Coup.Username();
+                var name = prompt("Style name");
+                if (name === "") alert("Cannot be empty.");
+                else {
+                    o.StyleName = name;
+                    Coup.Styles.Add(name, o);
+                }
+            });
+            imp.addEventListener("click", function(){
+                // TODO: finish this
+                var floater = mkFloater();
+                var closer = floater.children[0].children[0];
+                var content = floater.children[0].children[1];
+                var input = document.createElement("textarea");
+
+                closer.addEventListener("click", function(e){
+                    e.preventDefault();
+                    var str = input.textContent;
+                    var b = maybe(false, function(o){
+                        if ("StyleName" in o) Coup.Styles.Add(o.StyleName, o);
+                        else null;
+                        return true;
+                    }, maybeParse(str));
+                    if (!b) null;
+                });
+
+                content.appendChild(input);
+                document.body.appendChild(floater);
+            });
+            pubstatus.addEventListener("click", function(){
+                this.textContent = "";
+            });
+
+            form.appendChild(submit);
+            form.appendChild(save);
+            form.appendChild(imp);
+            form.appendChild(pubstatus);
+
+            var savedstyles = Coup.Styles.List();
+            for (var i = 0; i < savedstyles.length; i++){
+                var wrap = document.createElement("div");
+                var header = document.createElement("span");
+                var post = mkPost(savedstyles[i].Username);
+                var edit = document.createElement("input");
+                var exp = document.createElement("input");
+                var del = document.createElement("input");
+
+                wrap.style.margin = "20px 0px 5px 0px";
+                header.textContent = savedstyles[i].StyleName;
+                header.style.backgroundColor = "#1B1D1F";
+                header.style.borderTopLeftRadius = "5px 5px";
+                header.style.borderTopRightRadius = "5px 5px";
+                header.style.color = "#FCFCFC";
+                header.style.marginTop = "-17px";
+                header.style.padding = "1px 4px";
+                header.style.position = "absolute";
+                header.style.zIndex = "1";
+                stylePost(savedstyles[i], post.children[0]);
+                post.style.marginBottom = "5px";
+                edit.type = "button";
+                edit.value = "Edit";
+                exp.type = "button";
+                exp.value = "Export";
+                del.type = "button";
+                del.value = "Delete";
+
+                var index = i;
+                // XXX: Modify based on index.
+                // XXX: What if I remove one in between two? WHAT ABOUT THE INDEX
+                edit.addEventListener("click", function(){
+                    // TODO: load into inputs
+                    currentStyle = savedstyles[index].StyleName;
+                });
+                exp.addEventListener("click", function(){
+                    var style = savedstyles[index];
+                    var floater = mkFloater();
+                    var output = document.createElement("textarea");
+
+                    var b = maybe(false, function(s){
+                        output.textContent = s;
+                        return true;
+                    }, maybeStringify(style));
+
+                    if (!b) Console.Log("Export style: " + e); // TODO: empty
+
+                    floater.children[0].children[1].appendChild(output);
+                    document.body.appendChild(floater);
+                });
+                del.addEventListener("click", function(){
+                    Coup.Styles.Remi(index);
+                });
+
+                wrap.appendChild(header);
+                wrap.appendChild(post);
+                wrap.appendChild(edit);
+                wrap.appendChild(exp);
+                wrap.appendChild(del);
+                styles.appendChild(wrap);
+            }
+
+            form.appendChild(styles);
+
+        }, maybeParse(s));
+    }
+    either(function(x){
+        SendPost( new GetStyles(false, [ new User(Coup.Username(), 0)  ])
+                , function(s){
+                    eitherStyles = new Right(s);
+                    f(s);
+                  }
+                );
+    }, f, eitherStyles);
 
     form.addEventListener("submit", function(e){
         e.preventDefault();
@@ -1768,20 +2082,98 @@ function mkPublish(){
     return form;
 }
 
+// mkSettings :: IO ()
 function mkSettings(){
     Console.Log("mkSettings");
+    var form = document.createElement("div");
+
+    //
+
+    return form;
 }
 
+// mkCache :: IO ()
 function mkCache(){
-    Console.Log("mkCache");
+    var form = document.createElement("div");
+    var wrap = document.createElement("div");
+    var clear = document.createElement("input");
+    form.id = "Coup5Cache";
+    form.style.marginTop = "17px";
+    wrap.style.marginTop = "17px";
+    clear.type = "button";
+    clear.value = "Clear cache";
+    clear.style.marginTop = "10px";
+    var styles = Coup.Cache.List();
+    Console.Log("mkCache: " + styles.length + " styles found.");
+    for (var i = 0; i < styles.length; i++){
+        var wrap = document.createElement("div");
+        var e = mkPost(styles[i].Username);
+        wrap.style.margin = "5px 0px";
+        e.className = "Coup5CacheStyle";
+        stylePost(styles[i], e.children[0]); // TODO // TODO: figure out why there's a TODO here.
+        wrap.appendChild(e);
+        form.appendChild(wrap);
+    }
+
+    clear.addEventListener("click", function(){
+        Coup.Cache.Clear();
+        var cstyles = document.getElementsByClassName("Coup5CacheStyle");
+        for (var i = 0; i < cstyles.length; i++)
+            cstyles[i].parentNode.removeChild(cstyles[i]);
+    });
+
+    wrap.appendChild(clear);
+    form.appendChild(wrap);
+
+    return form;
 }
 
+// mkAbout :: IO ()
 function mkAbout(){
     Console.Log("mkAbout");
+    var form = document.createElement("div");
+    var banner = document.createElement("div");
+    var version = document.createElement("div");
+
+    var rainbow = [ "transparent", "red", "orange", "yellow", "green", "blue"
+                  , "indigo", "violet", "transparent" ];
+    var n = 100 / rainbow.length / 2;
+    var gradient = "";
+    for (var i = 0; i < rainbow.length; i++){
+        gradient += ", " + rainbow[i] + " " + Math.ceil(n) + "%";
+        n = n + 100 / rainbow.length;
+    }
+    Console.Log(gradient);
+
+    banner.id = "Coup5AboutBanner";
+    banner.style.backgroundImage =
+        "-moz-linear-gradient(-17deg" + gradient + ")";
+    banner.textContent = "Coup d'Bungie";
+    version.id = "Coup5AboutText";
+    version.innerHTML = "<p>You are using Coup d'Bungie " + Coup.Version +
+                        " for " + Coup.Platform + " by " +
+                        "<a href=/Account/Profile.aspx?memberID=" +
+                        Coup.AuthorMemberID + ">" + Coup.Author + "</a>, " +
+                        "the script <span class=spoiler>and Group</span> " +
+                        "that adds rainbows to Bungie.net.</p>" +
+                        "<p>This script is hosted on Github: " +
+                        "<a href=https://github.com/Shou-/Coup-5>Coup-5</a>" +
+                        "</p>For help with Coup d'Bungie, please visit <a " +
+                        "href=/fanclub/coup5/Group/GroupHome.aspx>Coup 5</a> " +
+                        "or <a href=/fanclub/coupdbungie/Group/GroupHome.aspx" +
+                        ">Coup d'Bungie</a>.</p>" +
+                        "<p>Also, special thanks to dazarobbo and the rest " +
+                        "of the Coup mod team! You are awesome!</p>";
+    form.style.margin = "20px";
+
+    form.appendChild(banner);
+    form.appendChild(version);
+
+    return form;
 }
 
 // mkProfile :: IO ()
-function mkProfile(){
+function mkProfile(hash){
     var wrap = document.createElement("div");
     var iboxd = document.createElement("div");
     var boxd = document.createElement("div");
@@ -1794,7 +2186,7 @@ function mkProfile(){
                   }
     var ui = document.createElement("div");
 
-    var form = document.createElement("form");
+    if (!(hash in tablist)) hash = "Publish";
 
     wrap.id = "Coup5";
     wrap.className = "boxD_outer";
@@ -1806,10 +2198,13 @@ function mkProfile(){
     tabs.style.width = "100%";
 
     for (k in tablist){
-        var tab = document.createElement("span");
+        var tab = document.createElement("a");
 
         tab.className = "Coup5Tab";
         tab.textContent = k;
+        tab.href = "javascript:;";
+        if (hash === k)
+            tab.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
 
         tab.addEventListener("click", function(){
             var key = this.textContent;
@@ -1820,7 +2215,7 @@ function mkProfile(){
             for (var i = 0; i < tabs.children.length; i++){
                 tabs.children[i].style.backgroundColor = "";
             }
-            this.style.backgroundColor = "rgba(255,255,255,0.05)";
+            this.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
         });
 
         tabs.appendChild(tab);
@@ -1828,6 +2223,7 @@ function mkProfile(){
 
     // Events
 
+    ui.appendChild(tablist[hash]());
     boxd.appendChild(header);
     boxd.appendChild(tabs);
     boxd.appendChild(ui);
@@ -1841,49 +2237,71 @@ function mkProfile(){
 
 // insertUI :: IO ()
 function insertUI(){
-    if (window.location.pathname.match(/\/Account\/Profile\.aspx/i)){
+    if (window.location.pathname.match(/\/Account\/Profile\.aspx(\#\S+)?$/i)){
         Console.Log("insertUI: Adding Profile UI.");
-        var ui = mkProfile();
+        var tab = "Publish";
+        if (window.location.hash !== "") tab = window.location.hash.substr(1);
+        var ui = mkProfile(tab);
 
         var pid = "ctl00_mainContent_profilePanel";
         var profilePanel = document.getElementById(pid);
         profilePanel.appendChild(ui);
-        document.getElementById("Coup5UI").appendChild(mkPublish());
         Console.Log("Successfully added UI.");
 
     } else if (window.location.pathname.match(/Posts\.aspx/i)) {
         Console.Log("insertUI: Adding Posts UI.");
         Coup.Cache.Autoclear();
         var nameElems = document.getElementsByClassName("login");
+        var sigs = document.getElementsByClassName("leftside");
         var names = [];
-        var cnames = Coup.Cache.Usernames();
+        var cnames = Coup.Cache.Names();
         for (var i = 0; i < nameElems.length; i++){
             var name = nameElems[i].textContent;
             if (!elem(name, names) && !elem(name, cnames))
                 names.push(name);
         }
+        names = Coup.Ignore.Filter(names);
         Console.Log("insertUI: " + JSON.stringify(names) + " <|> " +
                     JSON.stringify(cnames)
                    );
-        Console.Log("insertUI: Requesting styles " + JSON.stringify(names));
-        var obj = makeGetStyles(names);
-        SendPost(obj, applyStyles);
+        if (names.length > 0){
+            Console.Log("insertUI: Requesting styles " + JSON.stringify(names));
+            var obj = makeGetStyles(names);
+            SendPost(obj, co(applyStyles, getStyles));
+        } else applyStyles([]);
 
-        /*for (var i = 0; i < sigs.length; i++){
+        for (var i = 0; i < sigs.length; i++){
+            // FIXME: 80col BREAK
             var title = sigs[i].parentNode.parentNode.children[0].children[0].children[0].title;
             var text = sigs[i].parentNode.parentNode.children[0].children[0].children[0].textContent;
+            var postCtrl = sigs[i].parentNode.parentNode.parentNode.parentNode;
+            var postid;
+            if (postCtrl.children[0] === "end")
+                postid = postCtrl.children[1].name;
+            else postid = postCtrl.children[0].name;
+
             var username = title || text;
             var li = document.createElement("li");
-            li.innerHTML = "<span>Coup-5-Mod:&nbsp;</span>";
             var a = document.createElement("a");
+            var link = document.createElement("a");
+
+            li.innerHTML = "<span>Coup-5 ignore:&nbsp;</span>";
             a.href = "javascript:;";
-            a.className = "coup5modspawn";
+            a.className = "Coup5IgnoreSpawn";
             a.textContent = username;
-            a.addEventListener("click", spawnMod);
+            link.textContent = "Permalink to this post";
+            link.href = window.location.pathname + "?postID=" + postid;
+
+            a.addEventListener("click", function(){}); // TODO: finish function
+
+            sigs[i].parentNode.getElementsByClassName("rightside")[0].appendChild(link);
             li.appendChild(a);
             sigs[i].appendChild(li);
-        }*/
+        }
+
+        // FIXME: >implying vs is defined
         if (vs !== ""){
+            Console.Log("Trying to get MemberId...");
             var pid = window.location.hash.substr(1);
             var es = document.getElementsByName(pid);
             if (es.length > 0){
@@ -2008,19 +2426,10 @@ function storeKey(s){
 // }}}
 
 // {{{ Publishing
-function publishStyles(){
-    var msg = document.getElementById("Coup5PublishStatus");
-    msg.textContent = "Publishing styles...";
-    msg.style.color = "#c47f2c";
 
-    var o = new Publish( Coup.Username("")
-                       , fromJust(Coup.Key())
-                       , {}
-                       , {}
-                       , {}
-                       , {}
-                       );
-    var trs = document.getElementById("Coup5UI").getElementsByTagName("tr");
+function gatherStyles(id){
+    var o = {};
+    var trs = document.getElementById(id).getElementsByTagName("tr");
     for (var i = 0; i < trs.length; i++){
         var val;
         var inp = trs[i].children[1].children[0];
@@ -2064,11 +2473,28 @@ function publishStyles(){
                 return ob;
             }
         }
-        if (val !== undefined) o = merge(f(["Data"].concat(keys), obj), o);
+        if (val !== undefined) o = merge(f(keys, obj), o);
     }
     var bgs = [];
-    for (k in o.Data.Post.Backgrounds) bgs.push(o.Data.Post.Backgrounds[k]);
-    o.Data.Post.Backgrounds = bgs;
+    for (k in o.Post.Backgrounds) bgs.push(o.Post.Backgrounds[k]);
+    o.Post.Backgrounds = bgs;
+
+    return o;
+}
+
+function publishStyles(){
+    var msg = document.getElementById("Coup5PublishStatus");
+    msg.textContent = "Publishing styles...";
+    msg.style.color = "#c47f2c";
+
+    var o = new Publish( Coup.Username("")
+                       , fromJust(Coup.Key())
+                       , {}
+                       , {}
+                       , {}
+                       , {}
+                       );
+    o = merge({ "Data": gatherStyles("Coup5UI") }, o);
     Console.Log("Publish styles: " + JSON.stringify(o));
     SendPost(o, function(str){
         maybe(null, function(obj){
@@ -2092,7 +2518,7 @@ function main(){
         insertUI();
         styleUI();
     } else {
-        var reason = "Your browser does not support Coup-5-Mod.";
+        var reason = "Your browser does not support Coup-5.";
         reason += "\nlocalStorage: " + (localStorage ? true : false);
         reason += "\nXMLHttpRequest: " + (XMLHttpRequest ? true : false);
         reason += "\nJSON: " + (JSON ? true : false);
