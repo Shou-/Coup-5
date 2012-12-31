@@ -11,41 +11,48 @@
 // @license         (CC) Attribution Non-Commercial Share Alike; http://creativecommons.org/licenses/by-nc-sa/3.0/
 // ==/UserScript==
 
-// About:
-// Special thanks to Dazarobbo for hosting the server and writing the first
-// Coup-5 script, the Coup group for being awesome and to YOU for using this
-// script!
-
 // TODO:
-// - Coup saving.
-//      - Coup style exporting and importing.
-// - Improved UI (minimalist, collapse, convenience).
-//      - Report page.
-//          - Too many people do not know about the report button in signatures.
 // - Cache
 //      - Works as expected?
+//      - Report buttons here
 // - Ignore list
 //      - "Permanent cache"
 //          - Make sure this works now.
 //      - Make a generic function for both the cache and ignore list instead of
 //        two that do the same thing with different keys.
+//      - Finish the ignore UI.
 // - Updater
 // - Registration
 //      - Make sure it is fail-safe.
 //          - Fallback to manual registration.
 // - Reporting
+//      - Allow the user to load old Coups through Ids?
+//      - Report buttons on profile pages
 // - Publishing
 //      - Merge objects properly so all inputs appear
 //      - Color wheel
 //      - Adding layers
 // - Clean codebase
 //      - Find /TODO, /XXX and /FIXME comments
+//      - Still, STILL, not done.
+//      - Replace `f' functions with properly named ones.
 // - Replace alerts and prompts with mkFloaters
+// - Convert old Coup-5 data to new
+//      - Saved styles
+//          - Make sure this works.
+//      - Delete unused data
+// - Options
+//      - Global opacity
+//      - Report input here
+// - mkWarning
+// - Input placeholders.
+// - More warnings!
 
 // XXX:
 
 // FIXME:
-// - More button not affected by opacity.
+// - Unicode characters not showing up in cache, saved styles or preview.
+// - Publish page doesn't work if you navigate back to it from another tab.
 
 // Vim:
 // :set expandtab
@@ -229,6 +236,14 @@ function triggerMouseEvent(et, o){
     o.dispatchEvent(evt);
 }
 
+// triggerHTMLEvent :: String -> DOMObj -> IO ()
+function triggerHTMLEvent(et, o){
+    var evt = document.createEvent("HTMLEvents");
+    evt.initEvent(et, true, true);
+    evt.eventName = et;
+    o.dispatchEvent(evt);
+}
+
 // getSelectedValue :: DOMObj -> DOMObj
 function getSelectedValue(o){
     for (var i = 0; i < o.children.length; i++)
@@ -284,9 +299,9 @@ function maybeParse(s){
 }
 
 // maybeStringify :: a -> Maybe String
-function maybeStringify(a){
+function maybeStringify(o){
     try {
-        return new Just(JSON.stringify(s));
+        return new Just(JSON.stringify(o));
     } catch(e){
         return Nothing;
     }
@@ -347,6 +362,8 @@ function either(f, g, e){
 // }}}
 
 // {{{ Styles
+
+var currentStyle = new Left(null);
 
 var eitherStyles = new Left(null);
 
@@ -575,33 +592,45 @@ var Coup = { Debug: true
                 }
                 return mi;
              }
-           , Ignore: { List: function(){
+           , Ignore: { Obj: function(){
                         var tmp = Browser.Memory.Get(this.Key, "{}");
-                        return maybe([], function(o){
-                            if ("List" in o) return o.List;
+                        return maybe({}, id, maybeParse(tmp));
+                       }
+                     , List: function(o){
+                        if (o === undefined) o = this.Obj();
+                        var us = Coup.Username();
+                        if (us in o) {
+                            if ("List" in o[us]) return o.List;
                             else return [];
-                        }, maybeParse(tmp));
+                        } else return [];
                        }
                      , Mode: function(){
-                        var tmp = Browser.Memory.Get(this.Key, "{}");
-                        return maybe(0, function(o){
-                            if ("Mode" in o) return o.Mode;
+                        var o = this.Obj();
+                        var us = Coup.Username();
+                        if (us in o) {
+                            if ("Mode" in o[us]) return o.Mode;
                             else return 0;
-                        }, maybeParse(tmp));
+                        } else return 0;
                        }
                      , Add: function(style){
-                        var list = this.List();
-                        var mode = this.Mode();
+                        var o = this.Obj();
+                        var us = Coup.Username();
+                        var list = this.List(o);
                         var f = function(o){
                             return (o["Username"] === style.Username);
                         }
-                        var o = { Mode: mode, List: insert(f, style, list) }
+                        o[us] = insert(f, style, list);
                         Browser.Memory.Set(this.Key, JSON.stringify(o));
                        }
                      , Rem: function(username){
-                        var list = this.List();
-                        delete list[username];
-                        Browser.Memory.Set(this.Key, list);
+                        var o = this.Obj();
+                        var us = Coup.Username();
+                        if (us in o){
+                            if ("List" in o[us]) o[us] = filter(function(x){
+                                return !(x.Username === username);
+                            }, o[us]);
+                        }
+                        Browser.Memory.Set(this.Key, JSON.stringify(o));
                        }
                      , Names: function(){
                         var inames = [];
@@ -669,33 +698,43 @@ var Coup = { Debug: true
                     , Key: "Coup5Cache"
                     , TimeKey: "Coup5CacheTime"
                     }
-           , Styles: { List: function(){
-                        var tmp = Browser.Memory.Get(this.Key, "[]");
-                        return maybe([], function(o){
+           , Styles: { Obj: function(){
+                        var tmp = Browser.Memory.Get(this.Key, "{}");
+                        return maybe({}, function(o){
                             return o;
                         }, maybeParse(tmp));
                        }
-                     , Add: function(name, style){
-                        var list = this.List();
+                     , List: function(o){
+                        var username = Coup.Username("");
+                        if (username in o) return o[username];
+                        else return [];
+                       }
+                     , Add: function(style, username){
+                        var o = this.Obj();
+                        if (username === undefined)
+                            username = Coup.Username("");
+                        var list = this.List(o);
                         list = insert(function(x){
-                            return x === name;
+                            return x.StyleName === style.StyleName;
                         }, style, list);
-                        Browser.Memory.Set(this.Key, JSON.stringify(list));
+                        o[username] = list;
+                        Browser.Memory.Set(this.Key, JSON.stringify(o));
+                       }
+                     , Get: function(name){
+                        var list = this.List(this.Obj());
+                        return maybe({}, id, listToMaybe(filter(function(x){
+                            return x.StyleName === name;
+                        }, list)));
                        }
                      , Rem: function(name){
-                        var list = this.List();
+                        var o = this.Obj();
+                        var username = Coup.Username("");
+                        var list = this.List(o);
                         list = filter(function(x){
-                            return !x === name;
+                            return !(x.StyleName === name);
                         }, list);
-                        Browser.Memory.Set(this.Key, JSON.stringify(list));
-                       }
-                     , Remi: function(index){
-                        var list = this.List();
-                        var tmp = [];
-                        for (var i = 0; i < list.length; i++)
-                            if (i !== index)
-                                tmp.push(list[i]);
-                        Browser.Memory.Set(this.Key, JSON.stringify(tmp));
+                        o[username] = list;
+                        Browser.Memory.Set(this.Key, JSON.stringify(o));
                        }
                      , Key: "Coup5Styles"
                      }
@@ -958,7 +997,8 @@ function User(u, i){
 
 // {{{ Style
 var style = "\
-#Coup5 input, #Coup5 select {\
+#Coup5 input, #Coup5 select, #Coup5 textarea,\
+#Coup5Floater input, #Coup5Floater select, #Coup5Floater textarea {\
     background-color: #1b1d1f;\
     color: #b0b0b0;\
     border: 1px solid #707070;\
@@ -968,7 +1008,8 @@ var style = "\
 }\
 \
 #Coup5 input[type='submit']:hover, #Coup5 select:hover,\
-#Coup5 input[type='button']:hover {\
+#Coup5 input[type='button']:hover, #Coup5Floater input[type='submit']:hover,\
+#Coup5Floater input[type='button']:hover{\
     background-color: #17668a;\
     border: 1px solid #56aacd;\
     cursor: pointer;\
@@ -990,6 +1031,16 @@ ul.leftside { height: auto !important }\
 \
 .Coup5Divider td {\
     border-top: 1px solid #d0d0d0;\
+}\
+.Coup5StyleHeader {\
+    color: #FCFCFC;\
+    padding: 1px 4px;\
+}\
+\
+.Coup5Collapser:hover {\
+    cursor: pointer;\
+    background-color: #17668A !important;\
+    color: #FFF;\
 }\
 \
 #Coup5UI tr:nth-child(odd) {\
@@ -1029,26 +1080,45 @@ ul.leftside { height: auto !important }\
 .spoiler:hover {\
     color: white;\
 }\
+\
+.Coup5FloaterTitle {\
+    color: #71CAEF;\
+    float: left;\
+    padding: 3px 13px;\
+}\
+\
+.Coup5TextArea {\
+    width: 360px;\
+    height: 240px;\
+    font-family: consolas;\
+}\
+\
 ";
 // }}}
 
+// TODO: finish this
 // spawnIgnore :: IO ()
 function spawnIgnore(){
-    var aheader = this.parentNode.parentNode.parentNode.parentNode.children[0];
-    var title = aheader.children[0].children[0].title;
-    var text = aheader.children[0].children[0].textContent;
-    var username = title || text;
+    var username = this.textContent;
+    var cache = Coup.Cache.List();
     Console.Log("spawnIgnore: Spawning UI for `" + username + "'.");
 
-    var ui = mkUI(username, 1);
-    var oui = document.getElementById("Coup5IgnoreUI");
-    if (oui){
-        oui.parentNode.replaceChild(ui, oui);
-    } else {
-        var floater = mkFloater();
-        floater.children[0].children[1].appendChild(ui);
-        document.body.appendChild(floater);
+    var f = function(obj){
+        var ui = mkStyler(obj);
+        var oui = document.getElementById("Coup5IgnoreSpawn");
+        if (oui){
+            oui.parentNode.replaceChild(ui, oui);
+        } else {
+            var floater = mkFloater("Coup5IgnoreSpawn");
+            floater.children[0].children[1].appendChild(ui);
+            document.body.appendChild(floater);
+        }
     }
+    var floater = mkFloater("Coup5IgnoreSpawn");
+    var inCache = maybe(false, function(x){
+        return true;
+    }, listToMaybe(filter(function(x){ x.Username === username }, cache)));
+    if (!inCache) f();
 }
 
 // {{{ Styling
@@ -1171,7 +1241,7 @@ function mkStyler(tree){
             });
             var save = document.createElement("input");
             save.type = "button";
-            save.value = "Save";
+            save.value = "save";
 
             save.addEventListener("click", function(){
                 var str = Browser.Memory.Get("coup5key", "{}");
@@ -1193,22 +1263,19 @@ function mkStyler(tree){
             var regtype = document.createElement("select");
             var regnew = document.createElement("option");
             var regfetch = document.createElement("option");
-            var msg = document.createElement("div");
+            var msg = mkWarning();
 
             register.type = "button";
-            register.value = "Register";
-            regnew.textContent = "New user";
-            regfetch.textContent = "Fetch key";
+            register.value = "register";
+            regnew.textContent = "new user";
+            regfetch.textContent = "fetch key";
             msg.id = "Coup5RegisterHint";
-            msg.style.cursor = "pointer";
-            msg.title = "Click here to hide this text";
 
             register.addEventListener("mouseover", function(){
-                msg.textContent = [ "Warning: This will change your user"
-                                  , "homepage link. Make sure to copy it if"
-                                  , "it's an important link."
-                                  ].join(' ');
-                msg.style.color = "#c47f2c";
+                warn(msg, 1, [ "Warning: This will change your user"
+                             , "homepage link. Make sure to copy it if"
+                             , "it's an important link."
+                             ].join(' '));
             });
             register.addEventListener("mouseout", function(){
                 msg.textContent = "";
@@ -1228,14 +1295,10 @@ function mkStyler(tree){
                                                   , "Time": getPOSIXTime() + 10
                                                   });
                         Browser.Memory.Set("Coup5ValidationString", valo);
-                    } else {
-                        msg.textContent = "Server error: " + o.Reason;
-                        msg.style.color = "#960050";
-                    }
-                    msg.textContent = [ "Setting validation string and getting"
-                                      , "MemberId..."
-                                      ].join(' ');
-                    msg.style.color = "#c47f2c";
+                    } else warn(msg, 2, "Server error: " o.Reason);
+                    warn(msg, 1, [ "Setting validation string and getting"
+                                 , "MemberId..."
+                                 ].join(' '));
                     setValidationString();
                     getMemberId();
 
@@ -1243,11 +1306,10 @@ function mkStyler(tree){
                         var mid = Coup.MemberId();
                         maybe(null, function(id){
                             clearInterval(idchecker);
-                            msg.textContent = [ "MemberId received"
-                                              , "(" + id + "),"
-                                              , "attempting to register..."
-                                              ].join(' ');
-                            msg.style.color = "#c47f2c";
+                            warn(msg, 1, [ "MemberId received"
+                                         , "(" + id + "),"
+                                         , "attempting to register..."
+                                         ].join(' '));
                             var obj;
                             if (newuser) obj = new Register(id);
                             else obj = new FetchKey(id);
@@ -1266,12 +1328,10 @@ function mkStyler(tree){
                         maybe(null, function(evs){
                             either(function(s){
                                 clearInterval(vschecker);
-                                msg.textContent = s;
-                                msg.style.color = "#960050";
+                                warn(msg, 2, s);
                             }, function(s){
                                 clearInterval(vschecker);
-                                msg.textContent = s;
-                                msg.style.color = "#c47f2c";
+                                warn(msg, 1, s);
                             }, evs);
                         }, maybeParse(uvs));
                     }, 108);
@@ -1281,9 +1341,7 @@ function mkStyler(tree){
                         var e = document.getElementById("Coup5ValidationFrame");
                         e.parentNode.removeChild(e);
                         if (!Browser.Memory.Get("Coup5ValidationBool", false)){
-                            msg.textContent =
-                                "Automatic registration timed out.";
-                            msg.style.color = "#960050";
+                            warn(msg, 2, "Automatic registeration timed out.");
                             //manualRegistration();
                         }
                         Browser.Memory.Delete("Coup5ValidationString");
@@ -1304,13 +1362,9 @@ function mkStyler(tree){
                     Console.Log("FetchKey: " + Coup.Username());
                     if (newuser) obj = new Register(Coup.Username());
                     else obj = new FetchKey(Coup.Username());
-                    msg.textContent = "Requesting validation string...";
-                    msg.style.color = "#c47f2c";
+                    warn(msg, 1, "Requesting validation string...");
                     SendPost(obj, f);
                 }
-            });
-            msg.addEventListener("click", function(){
-                this.textContent = "";
             });
 
             regtype.appendChild(regnew);
@@ -1365,8 +1419,6 @@ function mkStyler(tree){
 
             bgsadd.type = "button";
             bgsadd.value = "add layer";
-            td1.style.borderBottom = "1px solid #d0d0d0";
-            td2.style.borderBottom = "1px solid #d0d0d0";
             bgsadd.addEventListener("click", function(){
                 var i = 0;
                 var exists = true;
@@ -1448,8 +1500,7 @@ function mkStyler(tree){
     var td1 = document.createElement("td");
     var td2 = document.createElement("td");
     td1.textContent = "Collapse all";
-    trheader.style.cursor = "pointer";
-    trheader.style.borderBottom = "1px solid #d0d0d0";
+    trheader.className = "Coup5Collapser";
     trheader.addEventListener("click", function(){
         var toggler = this;
         var toggleNext = function(e){
@@ -1475,6 +1526,89 @@ function mkStyler(tree){
     ui.style.borderSpacing = "0";
 
     return ui;
+}
+
+// mkSavedStyle :: Style -> IO DOMObj
+function mkSavedStyle(s){
+    var wrap = document.createElement("div");
+    var header = document.createElement("span");
+    var post = mkPost(s.Username);
+    var edit = document.createElement("input");
+    var exp = document.createElement("input");
+    var del = document.createElement("input");
+
+    wrap.style.margin = "0px 0px 5px 0px";
+    header.textContent = s.StyleName;
+    header.className = "Coup5StyleHeader";
+    stylePost(s, post.children[0]);
+    post.style.marginBottom = "5px";
+    edit.type = "button";
+    edit.value = "edit";
+    exp.type = "button";
+    exp.value = "export";
+    del.type = "button";
+    del.value = "delete";
+
+    edit.addEventListener("click", function(){
+        var styleName = this.parentNode.children[1].textContent;
+        currentStyle = new Right(styleName);
+        var o = Coup.Styles.Get(styleName);
+        delete o.Username;
+        delete o.StyleName;
+        var s = mkStyler(o);
+        s.id = "Coup5Styler";
+        var e = document.getElementById("Coup5Styler");
+        Console.Log("Rape.");
+        var p = e.parentNode;
+        Console.Log("Tentacle.");
+        p.removeChild(e);
+        p.insertBefore(s, p.children[0]);
+        triggerHTMLEvent("change"
+                        , document.getElementById("Coup5Publish")
+                        );
+    });
+    exp.addEventListener("click", function(){
+        var styleName = this.parentNode.children[1].textContent;
+        var style = Coup.Styles.Get(styleName);
+        var e = mkFloater("Coup5Floater");
+        var cw = e.children[0].children[1];
+        var title = document.createElement("div");
+        var output = document.createElement("textarea");
+        var tip = document.createElement("div");
+
+        title.textContent = "Export style: " + styleName;
+        title.className = "Coup5FloaterTitle";
+        output.className = "Coup5TextArea";
+        tip.style.color = "#c47f2c";
+        tip.innerHTML = "Tip: use <a href=http://pastebin.com/>" +
+                        "Pastebin</a> to share styles.";
+
+        var b = maybe(false, function(s){
+            Console.Log(1);
+            output.textContent = s;
+            return true;
+        }, maybeStringify(style));
+
+        if (!b) Console.Log("Export: unable to stringify style.");
+
+        e.children[0].insertBefore(title, e.children[0].children[0]);
+        cw.appendChild(output);
+        cw.appendChild(tip);
+        document.body.appendChild(e);
+    });
+    del.addEventListener("click", function(){
+        var styleName = this.parentNode.children[1].textContent;
+        Coup.Styles.Rem(styleName);
+        this.parentNode.parentNode.removeChild(this.parentNode);
+    });
+
+    wrap.appendChild(post);
+    wrap.appendChild(header);
+    wrap.appendChild(edit);
+    wrap.appendChild(exp);
+    wrap.appendChild(del);
+
+    return wrap;
 }
 
 // makeGetStyles :: [String] -> [User]
@@ -1611,7 +1745,7 @@ function stylePost(s, o){
                 more.style.color = '#' + s.Titlebar.More.Color;
             if ("Opacity" in s.Titlebar.More){
                 more.style.opacity = s.Titlebar.More.Opacity;
-                moreButton.style.opacity = s.Titlebar.MoreOpacity;
+                moreButton.style.opacity = s.Titlebar.More.Opacity;
             }
         }
         if ("RemoveBars" in s.Titlebar){
@@ -1631,7 +1765,7 @@ function stylePost(s, o){
         if ("Backgrounds" in s.Post){
             for (var i = 0; i < s.Post.Backgrounds.length; i++){
                 var e = document.createElement("div");
-                e.id = "Coup-5-Background-" + i;
+                e.className = "Coup-5-Background-" + i;
                 e.style.position = "absolute";
                 e.top = "0px";
                 e.style.width = "670px";
@@ -1659,7 +1793,7 @@ function stylePost(s, o){
                         s.Post.Backgrounds[i].ImageAttachment;
                 if ("ImagePosition" in s.Post.Backgrounds[i])
                     e.style.backgroundPosition =
-                        s.Post.Backgrounds[i].imagePosition;
+                        s.Post.Backgrounds[i].ImagePosition;
 
                 o.parentNode.insertBefore(e, o.parentNode.children[0]);
             }
@@ -1928,6 +2062,79 @@ function mkFloater(id){
     return wrap;
 }
 
+// mkReport :: String -> IO DOMObj
+function mkReport(username){
+    var wrap = document.createElement("div");
+    var namein = document.createElement("input");
+    var reason = document.createElement("textarea");
+    var submit = document.createElement("input");
+    var warning = mkWarning();
+
+    namein.value = username;
+    namein.placeholder = "Username";
+    reason.placeholder = "Reason";
+    submit.type = "submit";
+
+    submit.addEventListener("click", function(){
+        if (namein.value !== ""){
+            if (reason.value !== ""){
+                var b = maybe(false, function(key){
+                    var obj = new Report( Coup.Username()
+                                        , Coup.Key()
+                                        , namein.value
+                                        , reason.value
+                                        , 1
+                                        );
+                    SendPost(obj, function(s){
+                        var b = maybe(false, function(o){
+                            if (o.Status === 1){
+                                warn(warning, 0, "Successful report.");
+                            } else warn(warning, 2, o.Reason);
+                        }, maybeParse(s));
+                        if (!b) warn(warning, 2
+                                    , "Invalid response from server."
+                                    );
+                    });
+                }, Coup.Key());
+                if (!b) warn(warning, 2, "You do not have a key stored.");
+            } else warn(warning, 2, "Reason must be provided.");
+        } else warn(warning, 2, "Username must be provided.");
+    });
+
+    wrap.appendChild(namein);
+    wrap.appendChild(reason);
+    wrap.appendChild(warning);
+
+    return wrap;
+}
+
+// mkWarning :: IO DOMObj
+function mkWarning(){
+    var warning = document.createElement("div");
+
+    warning.style.cursor = "pointer";
+
+    warning.addEventListener("click", function(){
+        this.textContent = "";
+    });
+
+    return warning;
+}
+
+// warn :: DOMObj -> String -> Int -> IO ()
+function warn(o, s, n){
+    if (n === 0){
+        o.style.color = "#66aa11";
+        o.textContent = s;
+    } else if (n === 1){
+        o.style.color = "#c47f2c";
+        o.textContent = s;
+    } else {
+        o.style.color = "#960050";
+        o.textContent = s;
+    }
+}
+
 // mkPublish :: IO DOMObj
 function mkPublish(){
     var form = document.createElement("form");
@@ -1943,7 +2150,9 @@ function mkPublish(){
             }, Coup.Key());
             delete obj.Id;
             Console.Log(JSON.stringify(obj));
-            form.appendChild(mkStyler(obj));
+            var styler = mkStyler(obj);
+            styler.id = "Coup5Styler";
+            form.appendChild(styler);
 
             var submit = document.createElement("input");
             var save = document.createElement("input");
@@ -1951,115 +2160,159 @@ function mkPublish(){
             var pubstatus = document.createElement("div");
             var styles = document.createElement("div");
             submit.type = "submit";
-            submit.value = "Submit";
+            submit.value = "publish";
             save.type = "button";
-            save.value = "Save style";
+            save.value = "save style";
             imp.type = "button";
-            imp.value = "Import style";
+            imp.value = "import style";
             pubstatus.id = "Coup5PublishStatus";
             pubstatus.style.cursor = "pointer";
 
             save.addEventListener("click", function(){
-                var o = gatherStyles("Coup5UI");
-                o.Username = Coup.Username();
-                var name = prompt("Style name");
-                if (name === "") alert("Cannot be empty.");
-                else {
-                    o.StyleName = name;
-                    Coup.Styles.Add(name, o);
-                }
-            });
-            imp.addEventListener("click", function(){
-                // TODO: finish this
-                var floater = mkFloater();
-                var closer = floater.children[0].children[0];
-                var content = floater.children[0].children[1];
-                var input = document.createElement("textarea");
+                var e = mkFloater("Coup5Floater");
+                var cw = e.children[0].children[1];
+                var title = document.createElement("div");
+                var input = document.createElement("input");
+                var submit = document.createElement("input");
+                var warning = mkWarning();
 
-                closer.addEventListener("click", function(e){
-                    e.preventDefault();
-                    var str = input.textContent;
-                    var b = maybe(false, function(o){
-                        if ("StyleName" in o) Coup.Styles.Add(o.StyleName, o);
-                        else null;
-                        return true;
-                    }, maybeParse(str));
-                    if (!b) null;
+                title.textContent = "Save style";
+                title.className = "Coup5FloaterTitle";
+                either(id, function(name){ input.value = name; }, currentStyle);
+                submit.type = "submit";
+                submit.value = "save";
+
+                var f = function(){
+                    if (input.value !== ""){
+                        var o = gatherStyles("Coup5UI");
+                        o.StyleName = input.value;
+                        Coup.Styles.Add(o);
+                        e.parentNode.removeChild(e);
+                    } else {
+                        warn(warning, 2, "Cannot be empty");
+                    }
+                }
+
+                input.addEventListener("keydown", function(e){
+                    if (e.keyCode === 13) f();
+                });
+                submit.addEventListener("click", function(){
+                    f();
                 });
 
-                content.appendChild(input);
-                document.body.appendChild(floater);
+                e.children[0].insertBefore(title, e.children[0].children[0]);
+                cw.appendChild(input);
+                cw.appendChild(submit);
+                cw.appendChild(warning);
+                document.body.appendChild(e);
+            });
+            imp.addEventListener("click", function(){
+                Console.Log("Spawning import UI...");
+                var e = mkFloater("Coup5Floater");
+                var cw = e.children[0].children[1];
+                var title = document.createElement("div");
+                var input = document.createElement("textarea");
+                var submit = document.createElement("input");
+                var warning = mkWarning();
+
+                title.textContent = "Import style";
+                title.className = "Coup5FloaterTitle";
+                input.className = "Coup5TextArea";
+                submit.type = "submit";
+                submit.value = "save";
+
+                submit.addEventListener("click", function(e){
+                    var str = input.value;
+                    var b = maybe(false, function(o){
+                        if ("StyleName" in o){
+                            Coup.Styles.Add(o);
+                            var wrap = mkSavedStyle(o);
+                            styles.appendChild(wrap);
+                            e.parentNode.removeChild(e);
+                            return true;
+                        } else return false;
+                    }, maybeParse(str));
+
+                    if (!b) warn(warning, 2, "Incorrect style data.");
+                });
+
+                e.children[0].insertBefore(title, e.children[0].children[0]);
+                cw.appendChild(input);
+                cw.appendChild(submit);
+                cw.appendChild(warning);
+                document.body.appendChild(e);
             });
             pubstatus.addEventListener("click", function(){
                 this.textContent = "";
             });
 
+            var preview = speedcore(
+                "div", { style: { margin: "20px 0px 25px 0px" } }, [
+                    "div", { style: { backgroundColor: "#1B1D1F"
+                                    , color: "#71CAEF"
+                                    , position: "absolute"
+                                    , zIndex: 1
+                                    , marginTop: "-17px"
+                                    , padding: "1px 4px"
+                                    , borderTopLeftRadius: "5px 5px"
+                                    , borderTopRightRadius: "5px 5px"
+                                    }
+                           , textContent: "Preview"
+                           }, []
+                ]
+            );
+            var post = mkPost(Coup.Username(""));
+            var styletitle = speedcore(
+                "div", { style: { backgroundColor: "#1B1D1F"
+                                , color: "#71CAEF"
+                                , position: "absolute"
+                                , zIndex: 1
+                                , marginTop: "-17px"
+                                , padding: "1px 4px"
+                                , borderTopLeftRadius: "5px 5px"
+                                , borderTopRightRadius: "5px 5px"
+                                }
+                       , textContent: "Saved styles"
+                       }, []
+            );
+
+            // XXX:
+            // >GatherStyles
+            // >here
+            stylePost(gatherStyles("Coup5UI"), post.children[0]);
+            post.style.marginBottom = "5px";
+            post.id = "Coup5StylePreview";
+
+            form.addEventListener("change", function(){
+                Console.Log("Change!");
+                var e = document.getElementById("Coup5StylePreview");
+                Console.Log("Removing preview...");
+                var p = e.parentNode;
+                p.removeChild(e);
+                Console.Log("Remaking preview...");
+                var post = mkPost(Coup.Username(""));
+                post.id = "Coup5StylePreview";
+                Console.Log("Restyling preview...");
+                stylePost(gatherStyles("Coup5UI"), post.children[0]);
+                Console.Log("Adding preview...");
+                p.appendChild(post);
+            });
+
+            preview.appendChild(post);
             form.appendChild(submit);
             form.appendChild(save);
             form.appendChild(imp);
             form.appendChild(pubstatus);
+            form.appendChild(preview);
+            form.appendChild(styletitle);
 
-            var savedstyles = Coup.Styles.List();
+            Console.Log("Generating saved styles...");
+            var savedstyles = Coup.Styles.List(Coup.Styles.Obj());
             for (var i = 0; i < savedstyles.length; i++){
-                var wrap = document.createElement("div");
-                var header = document.createElement("span");
-                var post = mkPost(savedstyles[i].Username);
-                var edit = document.createElement("input");
-                var exp = document.createElement("input");
-                var del = document.createElement("input");
-
-                wrap.style.margin = "20px 0px 5px 0px";
-                header.textContent = savedstyles[i].StyleName;
-                header.style.backgroundColor = "#1B1D1F";
-                header.style.borderTopLeftRadius = "5px 5px";
-                header.style.borderTopRightRadius = "5px 5px";
-                header.style.color = "#FCFCFC";
-                header.style.marginTop = "-17px";
-                header.style.padding = "1px 4px";
-                header.style.position = "absolute";
-                header.style.zIndex = "1";
-                stylePost(savedstyles[i], post.children[0]);
-                post.style.marginBottom = "5px";
-                edit.type = "button";
-                edit.value = "Edit";
-                exp.type = "button";
-                exp.value = "Export";
-                del.type = "button";
-                del.value = "Delete";
-
-                var index = i;
-                // XXX: Modify based on index.
-                // XXX: What if I remove one in between two? WHAT ABOUT THE INDEX
-                edit.addEventListener("click", function(){
-                    // TODO: load into inputs
-                    currentStyle = savedstyles[index].StyleName;
-                });
-                exp.addEventListener("click", function(){
-                    var style = savedstyles[index];
-                    var floater = mkFloater();
-                    var output = document.createElement("textarea");
-
-                    var b = maybe(false, function(s){
-                        output.textContent = s;
-                        return true;
-                    }, maybeStringify(style));
-
-                    if (!b) Console.Log("Export style: " + e); // TODO: empty
-
-                    floater.children[0].children[1].appendChild(output);
-                    document.body.appendChild(floater);
-                });
-                del.addEventListener("click", function(){
-                    Coup.Styles.Remi(index);
-                });
-
-                wrap.appendChild(header);
-                wrap.appendChild(post);
-                wrap.appendChild(edit);
-                wrap.appendChild(exp);
-                wrap.appendChild(del);
+                var wrap = mkSavedStyle(savedstyles[i]);
                 styles.appendChild(wrap);
             }
+            Console.Log("Done generating saved styles.");
 
             form.appendChild(styles);
 
@@ -2087,7 +2340,137 @@ function mkSettings(){
     Console.Log("mkSettings");
     var form = document.createElement("div");
 
-    //
+    var convStyles = document.createElement("input");
+    var delOld = document.createElement("input");
+    var delAll = document.createElement("input");
+
+    convStyles.type = "button";
+    convStyles.value = "Convert old saved styles";
+    delOld.type = "button";
+    delOld.value = "Delete old saved data";
+    delAll.type = "button";
+    delAll.value = "Delete all saved data";
+
+    convStyles.addEventListener("click", function(){
+        // XXX: We can use recursion here because the names (mostly?) match.
+        //      If there are any that don't match, add them manually. (This way)
+        var sostyles = Browser.Memory.Get("coup5styles", "{}");
+        var ostyles = maybe({}, id, maybeParse(sostyles));
+        var nstyles = [];
+        for (uname in ostyles){
+            Console.Log("Converting styles for " + uname + "...");
+            for (name in ostyles[uname]){
+                Console.Log("Converting style " + uname + "...");
+                var o = {}
+                var ostyle = ostyles[uname][name];
+                o.StyleName = name;
+                o.Avatar = { Image: ostyle.AvatarImage
+                           , Opacity: parseFloat(ostyle.AvatarOpacity)
+                           , Border: { Style: ostyle.AvatarBorderStyle
+                                     , Color: ostyle.AvatarBorderColor
+                                     }
+                           }
+                o.Titlebar = {
+                      Username: {
+                          Show: true
+                        , Text: ostyle.TitlebarUsernameText
+                        , Color: ostyle.TitlebarUsernameTextColor
+                        , Opacity: ostyle.TitlebarUsernameTextOpacity
+                        }
+                    , Title: {
+                          Show: true
+                        , Text: ostyle.TitlebarTitleText
+                        , Color: ostyle.TitlebarTitleTextColor
+                        , Opacity: ostyle.TitlebarTitleTextOpacity
+                        }
+                    , Message: {
+                          Show: true
+                        , Text: ostyle.TitlebarMessageText
+                        , Color: ostyle.TitlebarMessageTextColor
+                        , Opacity: ostyle.TitlebarMessageTextOpacity
+                        }
+                    , Group: {
+                          Show: true
+                        , Text: ostyle.TitlebarGroupText
+                        , Color: ostyle.TitlebarGroupTextColor
+                        , Opacity: ostyle.TitlebarGroupTextOpacity
+                        }
+                    , Background: {
+                          Image: ostyle.TitlebarBackgroundImage
+                        , Opacity: ostyle.TitlebarBackgroundOpacity
+                        , Color: ostyle.TitlebarBackgroundColor
+                        , GradientLeft: ostyle.TitlebarBackgroundGradientLeft
+                        , GradientRight: ostyle.TitlebarBackgroundGradientRight
+                        }
+                    , Border: { Style: ostyle.TitlebarBorderStyle
+                              , Color: ostyle.TitlebarBorderColor
+                              }
+                    , More: { Show: true
+                            , Text: null
+                            , Color: null
+                            , Opacity: ostyle.TitlebarMoreOpacity
+                            }
+                    , RemoveBars: false
+                    }
+                o.Post = {
+                      Backgrounds: [
+                        { Color: null
+                        , GradientLeft: null
+                        , GradientRight: null
+                        , Image: ostyle.PostBackground1Image
+                        , Opacity: ostyle.PostBackground1ImageOpacity
+                        , ImageRepeat: ostyle.PostBackground1ImageRepeat
+                        , ImageAttachment: ostyle.PostBackground1ImageAttachment
+                        , ImagePosition: ostyle.PostBackground1ImagePosition
+                        }
+                        ,
+                        { Color: null
+                        , GradientLeft: null
+                        , GradientRight: null
+                        , Image: ostyle.PostBackground2Image
+                        , Opacity: ostyle.PostBackground2ImageOpacity
+                        , ImageRepeat: ostyle.PostBackground2ImageRepeat
+                        , ImageAttachment: ostyle.PostBackground2ImageAttachment
+                        , ImagePosition: ostyle.PostBackground2ImagePosition
+                        }
+                        ,
+                        { Color: ostyle.PostBackgroundColor
+                        , GradientLeft: ostyle.PostBackgroundGradientLeft
+                        , GradientRight: ostyle.PostBackgroundGradientRight
+                        , Image: ostyle.PostBackground3Image
+                        , Opacity: ostyle.PostBackground3ImageOpacity
+                        , ImageRepeat: ostyle.PostBackground3ImageRepeat
+                        , ImageAttachment: ostyle.PostBackground3ImageAttachment
+                        , ImagePosition: ostyle.PostBackground3ImagePosition
+                        }
+                        ]
+                    , Font: ostyle.PostFont
+                    , Opacity: ostyle.PostFontOpacity
+                    , Color: ostyle.PostFontColor
+                    , Links: { Opacity: ostyle.PostLinkOpacity
+                             , Color: ostyle.PostLinkColor
+                             }
+                    }
+            o.Quote = {
+                  Opacity: 1.0
+                , BackgroundColor: ostyle.QuoteBackgroundColor
+                , Text: { Opacity: ostyle.PostFontOpacity
+                        , Font: ostyle.PostFont
+                        , Color: ostyle.QuoteFontColor
+                        }
+                , Border: { Style: "solid"
+                          , Color: ostyle.QuoteBorderColor
+                          }
+                }
+                Console.Log(o);
+                Coup.Styles.Add(o, uname);
+            }
+        }
+    });
+
+    form.appendChild(convStyles);
+    form.appendChild(delOld);
+    form.appendChild(delAll);
 
     return form;
 }
@@ -2110,7 +2493,7 @@ function mkCache(){
         var e = mkPost(styles[i].Username);
         wrap.style.margin = "5px 0px";
         e.className = "Coup5CacheStyle";
-        stylePost(styles[i], e.children[0]); // TODO // TODO: figure out why there's a TODO here.
+        stylePost(styles[i], e.children[0]);
         wrap.appendChild(e);
         form.appendChild(wrap);
     }
@@ -2207,14 +2590,20 @@ function mkProfile(hash){
             tab.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
 
         tab.addEventListener("click", function(){
+            Console.Log("Potato.");
             var key = this.textContent;
+            Console.Log("Fork.");
             var coup5ui = document.getElementById("Coup5UI");
+            Console.Log("Banana.");
             for (var i = 0; i < coup5ui.children.length; i++)
                 coup5ui.removeChild(coup5ui.children[i]);
-            document.getElementById("Coup5UI").appendChild(tablist[key]());
+            Console.Log("Cake.");
+            coup5ui.appendChild(tablist[key]());
+            Console.Log("Pancake.");
             for (var i = 0; i < tabs.children.length; i++){
                 tabs.children[i].style.backgroundColor = "";
             }
+            Console.Log("Muffin.");
             this.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
         });
 
@@ -2276,7 +2665,7 @@ function insertUI(){
             var text = sigs[i].parentNode.parentNode.children[0].children[0].children[0].textContent;
             var postCtrl = sigs[i].parentNode.parentNode.parentNode.parentNode;
             var postid;
-            if (postCtrl.children[0] === "end")
+            if (postCtrl.children[0].name === "end")
                 postid = postCtrl.children[1].name;
             else postid = postCtrl.children[0].name;
 
@@ -2292,7 +2681,7 @@ function insertUI(){
             link.textContent = "Permalink to this post";
             link.href = window.location.pathname + "?postID=" + postid;
 
-            a.addEventListener("click", function(){}); // TODO: finish function
+            a.addEventListener("click", spawnIgnore);
 
             sigs[i].parentNode.getElementsByClassName("rightside")[0].appendChild(link);
             li.appendChild(a);
@@ -2417,10 +2806,7 @@ function storeKey(s){
         } catch(e){
             Console.Log("storeKey: " + e);
         }
-    } else {
-        msg.textContent = o.Reason;
-        msg.style.color = "#960050";
-    }
+    } else warn(msg, 2, o.Reason);
 }
 
 // }}}
@@ -2428,7 +2814,9 @@ function storeKey(s){
 // {{{ Publishing
 
 function gatherStyles(id){
+    Console.Log("Gathering styles...");
     var o = {};
+    Console.Log(document.getElementById(id));
     var trs = document.getElementById(id).getElementsByTagName("tr");
     for (var i = 0; i < trs.length; i++){
         var val;
@@ -2482,10 +2870,10 @@ function gatherStyles(id){
     return o;
 }
 
+// publishStyles :: IO ()
 function publishStyles(){
     var msg = document.getElementById("Coup5PublishStatus");
-    msg.textContent = "Publishing styles...";
-    msg.style.color = "#c47f2c";
+    warn(msg, 1, "Publishing styles...");
 
     var o = new Publish( Coup.Username("")
                        , fromJust(Coup.Key())
@@ -2503,10 +2891,7 @@ function publishStyles(){
                 Coup.Cache.Add(o.Data);
                 msg.textContent = "Publish success!";
                 msg.style.color = "#66aa11";
-            } else {
-                msg.textContent = obj.Reason;
-                msg.style.color = "#960050";
-            }
+            } else warn(msg, 2, obj.Reason);
         }, maybeParse(str));
     });
 }
