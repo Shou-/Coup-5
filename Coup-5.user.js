@@ -14,20 +14,15 @@
 // TODO:
 // - Cache
 //      - Works as expected?
-//      - Report buttons here
 // - Ignore list
 //      - "Permanent cache"
 //          - Make sure this works now.
 //      - Make a generic function for both the cache and ignore list instead of
 //        two that do the same thing with different keys.
-//      - Finish the ignore UI.
 // - Updater
 // - Registration
 //      - Make sure it is fail-safe.
 //          - Fallback to manual registration.
-// - Reporting
-//      - Allow the user to load old Coups through Ids?
-//      - Report buttons on profile pages
 // - Publishing
 //      - Merge objects properly so all inputs appear
 //      - Color wheel
@@ -44,9 +39,9 @@
 // - Options
 //      - Global opacity
 //      - Report input here
-// - mkWarning
 // - Input placeholders.
 // - More warnings!
+// - jsonp
 
 // XXX:
 
@@ -68,6 +63,12 @@ var Console = {
             console.log(a);
         }
     }
+}
+
+// Trace :: a -> a
+function Trace(x){
+    Console.Log(x);
+    return x;
 }
 
 // }}}
@@ -600,7 +601,7 @@ var Coup = { Debug: true
                         if (o === undefined) o = this.Obj();
                         var us = Coup.Username();
                         if (us in o) {
-                            if ("List" in o[us]) return o.List;
+                            if ("List" in o[us]) return o[us].List
                             else return [];
                         } else return [];
                        }
@@ -1093,6 +1094,8 @@ ul.leftside { height: auto !important }\
     font-family: consolas;\
 }\
 \
+ul.leftside { height: auto !important }\
+\
 ";
 // }}}
 
@@ -1295,7 +1298,7 @@ function mkStyler(tree){
                                                   , "Time": getPOSIXTime() + 10
                                                   });
                         Browser.Memory.Set("Coup5ValidationString", valo);
-                    } else warn(msg, 2, "Server error: " o.Reason);
+                    } else warn(msg, 2, "Server error: " + o.Reason);
                     warn(msg, 1, [ "Setting validation string and getting"
                                  , "MemberId..."
                                  ].join(' '));
@@ -2073,14 +2076,17 @@ function mkReport(username){
     namein.value = username;
     namein.placeholder = "Username";
     reason.placeholder = "Reason";
+    reason.className = "Coup5TextArea";
+    reason.style.display = "block";
     submit.type = "submit";
+    submit.value = "send";
 
     submit.addEventListener("click", function(){
         if (namein.value !== ""){
             if (reason.value !== ""){
                 var b = maybe(false, function(key){
                     var obj = new Report( Coup.Username()
-                                        , Coup.Key()
+                                        , key
                                         , namein.value
                                         , reason.value
                                         , 1
@@ -2090,11 +2096,13 @@ function mkReport(username){
                             if (o.Status === 1){
                                 warn(warning, 0, "Successful report.");
                             } else warn(warning, 2, o.Reason);
+                            return true;
                         }, maybeParse(s));
                         if (!b) warn(warning, 2
                                     , "Invalid response from server."
                                     );
                     });
+                    return true;
                 }, Coup.Key());
                 if (!b) warn(warning, 2, "You do not have a key stored.");
             } else warn(warning, 2, "Reason must be provided.");
@@ -2102,6 +2110,7 @@ function mkReport(username){
     });
 
     wrap.appendChild(namein);
+    wrap.appendChild(submit);
     wrap.appendChild(reason);
     wrap.appendChild(warning);
 
@@ -2122,7 +2131,7 @@ function mkWarning(){
 }
 
 // warn :: DOMObj -> String -> Int -> IO ()
-function warn(o, s, n){
+function warn(o, n, s){
     if (n === 0){
         o.style.color = "#66aa11";
         o.textContent = s;
@@ -2491,10 +2500,32 @@ function mkCache(){
     for (var i = 0; i < styles.length; i++){
         var wrap = document.createElement("div");
         var e = mkPost(styles[i].Username);
+        var report = document.createElement("input");
+
         wrap.style.margin = "5px 0px";
         e.className = "Coup5CacheStyle";
         stylePost(styles[i], e.children[0]);
+        report.type = "button";
+        report.value = "report";
+
+        report.addEventListener("click", function(){
+            var login = this.parentNode.getElementsByClassName("login")[0];
+            var us = login.children[0].title;
+            var e = mkReport(us);
+            var f = mkFloater("Coup5Floater");
+            var cw = f.children[0].children[1];
+            var title = document.createElement("div");
+
+            title.className = "Coup5FloaterTitle";
+            title.textContent = "Report: " + us;
+
+            f.children[0].insertBefore(title, f.children[0].children[0]);
+            cw.appendChild(e);
+            document.body.appendChild(f);
+        });
+
         wrap.appendChild(e);
+        wrap.appendChild(report);
         form.appendChild(wrap);
     }
 
@@ -2670,22 +2701,42 @@ function insertUI(){
             else postid = postCtrl.children[0].name;
 
             var username = title || text;
-            var li = document.createElement("li");
-            var a = document.createElement("a");
+            var ig = document.createElement("li");
+            var re = document.createElement("li");
+            var igs = document.createElement("a");
+            var res = document.createElement("a");
             var link = document.createElement("a");
 
-            li.innerHTML = "<span>Coup-5 ignore:&nbsp;</span>";
-            a.href = "javascript:;";
-            a.className = "Coup5IgnoreSpawn";
-            a.textContent = username;
+            ig.innerHTML = "<span>Coup-5 ignore:&nbsp;</span>";
+            re.innerHTML = "<span>Coup-5 report:&nbsp;</span>";
+            igs.href = "javascript:;";
+            igs.textContent = username;
+            res.href = "javascript:;";
+            res.textContent = username;
             link.textContent = "Permalink to this post";
             link.href = window.location.pathname + "?postID=" + postid;
 
-            a.addEventListener("click", spawnIgnore);
+            igs.addEventListener("click", spawnIgnore);
+            res.addEventListener("click", function(){
+                var us = this.textContent;
+                var e = mkReport(us);
+                var f = mkFloater("Coup5Floater");
+                var cw = f.children[0].children[1];
+                var title = document.createElement("div");
+
+                title.className = "Coup5FloaterTitle";
+                title.textContent = "Report: " + us;
+
+                f.children[0].insertBefore(title, f.children[0].children[0]);
+                cw.appendChild(e);
+                document.body.appendChild(f);
+            });
 
             sigs[i].parentNode.getElementsByClassName("rightside")[0].appendChild(link);
-            li.appendChild(a);
-            sigs[i].appendChild(li);
+            ig.appendChild(igs);
+            re.appendChild(res);
+            sigs[i].appendChild(ig);
+            sigs[i].appendChild(re);
         }
 
         // FIXME: >implying vs is defined
