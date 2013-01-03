@@ -4,7 +4,7 @@ Coup d'Bungie 5
 This is the userscript for Coup d'Bungie 5. Coup d'Bungie lets you style your 
 posts on the Bungie.net forums.
 
-![Example of Coup styling posts](http://i.imgur.com/6qjiz.png)
+<img src=http://i.imgur.com/6qjiz.png />
 
 ## Groups
 
