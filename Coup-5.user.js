@@ -12,42 +12,52 @@
 // ==/UserScript==
 
 // TODO:
-// - Cache
-//      - Works as expected?
-// - Ignore list
-//      - "Permanent cache"
+// - Cache.
+//      - Per style timestamps.
+//      - Make sure this works now.
+// - Ignore list.
+//      - "Permanent cache".
 //          - Make sure this works now.
 //      - Make a generic function for both the cache and ignore list instead of
 //        two that do the same thing with different keys.
-// - Updater
-// - Registration
+// - Updater.
+// - Registration.
 //      - Make sure it is fail-safe.
 //          - Fallback to manual registration.
-// - Publishing
-//      - Merge objects properly so all inputs appear
-//      - Color wheel
-//      - Adding layers
-// - Clean codebase
-//      - Find /TODO, /XXX and /FIXME comments
+//              - Make sure this works now.
+// - Publishing.
+//      - Color wheel.
+// - Clean codebase.
+//      - Find /TODO, /XXX and /FIXME comments.
 //      - Still, STILL, not done.
 //      - Replace `f' functions with properly named ones.
-// - Replace alerts and prompts with mkFloaters
-// - Convert old Coup-5 data to new
-//      - Saved styles
-//          - Make sure this works.
-//      - Delete unused data
-// - Options
-//      - Global opacity
-//      - Report input here
+// - Convert old Coup-5 data to new.
+//      - Saved styles.
+//          - Delete empty backgrounds.
+//              - Make sure this works now.
+//          - Make sure this works now.
+//      - Delete unused data.
+// - Options.
+//      - Global opacity.
+//      - Report input here?
 // - Input placeholders.
 // - More warnings!
-// - jsonp
+//      - Where?!
+// - jsonp.
+// - XHR data encoding/decoding and escaping.
+// - Inject new style DOMObj on style save.
 
 // XXX:
 
 // FIXME:
 // - Unicode characters not showing up in cache, saved styles or preview.
+//      - ?
 // - Publish page doesn't work if you navigate back to it from another tab.
+// - Merge objects properly so all inputs appear.
+//      - See `merge' and function that makes inputs.
+//          - Test this on a new account to make sure.
+// - Style importing imports all styles under all usernames.
+//      - Not anymore. I'm too tired to verify this.
 
 // Vim:
 // :set expandtab
@@ -183,29 +193,33 @@ function insert(f, a, o){
 // keys :: Obj -> [a]
 function keys(o){
     var tmp = [];
-    for (k in o) tmp.push(k);
+    for (var k in o) tmp.push(k);
     return tmp;
 }
 
 // merge :: Obj -> Obj -> Obj
 function merge(o, p){
-    for (k in o)
-        if ( typeof o[k] === "object" && typeof p[k] === "object" )
+    for (var k in o){
+        if ( o[k] === null )
+            p[k] = null;
+        else if ( typeof o[k] === "object" && typeof p[k] === "object" )
             p[k] = merge(o[k], p[k]);
         else
             p[k] = o[k];
+    }
     return p;
 }
 
 // traverse :: [k] -> ([k] -> a -> b) -> Obj -> Obj
 function traverse(ks, f, tree){
-    for (k in tree){
+    for (var k in tree){
         if (typeof tree[k] === "object" && tree[k] !== null)
             tree[k] = traverse( ks.concat(k), f
                               , tree[k]
                               );
         else tree[k] = f(ks.concat(k), tree[k]);
     }
+
     return tree;
 }
 
@@ -383,12 +397,7 @@ var emptyStyles = (new Publish (
         , new Text(null, null, null, null)
         )
     , new Avatar(null, null, new Border(null, null))
-    , new Post( [ new PostBackground( null, null, null
-                                    , null, null, null
-                                    , null, null
-                                    )
-                ]
-              )
+    , new Post( [] )
     , new Quote(
           null
         , null
@@ -553,6 +562,8 @@ var Coup = { Debug: true
                                   , Error: 2
                                   }
                      }
+           , Update: function(){
+             }
              // Key :: Maybe String
            , Key: function(){
                 var str = Browser.Memory.Get("coup5key", "{}");
@@ -714,7 +725,9 @@ var Coup = { Debug: true
                         var o = this.Obj();
                         if (username === undefined)
                             username = Coup.Username("");
-                        var list = this.List(o);
+                        var list;
+                        if (username in o) list = o[username];
+                        else list = [];
                         list = insert(function(x){
                             return x.StyleName === style.StyleName;
                         }, style, list);
@@ -992,6 +1005,58 @@ function User(u, i){
 
 // }}}
 
+// | Add missing values to background objects.
+// fillBackgrounds :: Style -> Style
+function fillBackgrounds(o){
+    var fields = [ "Color"
+                 , "GradientLeft"
+                 , "GradientRight"
+                 , "Image"
+                 , "Opacity"
+                 , "ImageRepeat"
+                 , "ImageAttachment"
+                 , "ImagePosition"
+                 ]
+    for (var i = 0; i < o.Post.Backgrounds.length; i++){
+        var bg = {};
+        for (var j = 0; j < fields.length; j++){
+            if (!(fields[j] in o.Post.Backgrounds[i])){
+                bg[fields[j]] = null;
+            } else {
+                bg[fields[j]] = o.Post.Backgrounds[i][fields[j]];
+            }
+        }
+        o.Post.Backgrounds[i] = bg;
+    }
+
+    return o;
+}
+
+// | Remove empty background objects.
+// emptyBackgrounds :: Style -> Style
+function emptyBackgrounds(o){
+    var fields = [ "Color"
+                 , "GradientLeft"
+                 , "GradientRight"
+                 , "Image"
+                 ]
+    var bgs = [];
+    for (var i = 0; i < o.Post.Backgrounds.length; i++){
+        var n = 0;
+        for (var j = 0; j < fields.length; j++){
+            if (!(fields[j] in o.Post.Backgrounds[i])) n++;
+            else if ( elem( o.Post.Backgrounds[i][fields[j]]
+                          , [null, undefined, ""]
+                          ))
+                n++;
+        }
+        if (n !== 4) bgs.push(o.Post.Backgrounds[i]);
+    }
+    o.Post.Backgrounds = bgs;
+
+    return o;
+}
+
 // }}}
 
 // {{{ Interface
@@ -1010,7 +1075,7 @@ var style = "\
 \
 #Coup5 input[type='submit']:hover, #Coup5 select:hover,\
 #Coup5 input[type='button']:hover, #Coup5Floater input[type='submit']:hover,\
-#Coup5Floater input[type='button']:hover{\
+#Coup5Floater select:hover, #Coup5Floater input[type='button']:hover {\
     background-color: #17668a;\
     border: 1px solid #56aacd;\
     cursor: pointer;\
@@ -1129,375 +1194,6 @@ function spawnIgnore(){
 // mkStyler :: IO DOMObj
 function mkStyler(tree){
     var ui = document.createElement("table");
-    var statets = [];
-    var recurse = function(ts, a){
-        var curtes;
-        if (ts.length > 0) curtes = ts[ts.length - 1];
-        else curtes = "";
-        var wrap = document.createElement("tr");
-        var title = document.createElement("td");
-        var inputd = document.createElement("td");
-        var input;
-        if (["Text", "Image"].indexOf(curtes) != -1 && ts[0] != "Quote"){
-            input = document.createElement("input");
-            input.value = a;
-        } else if (["Show", "RemoveBars"].indexOf(curtes) != -1){
-            input = document.createElement("select");
-            seld = document.createElement("option");
-            seld.value = a;
-            seld.textContent = a;
-            opt = document.createElement("option");
-            opt.value = !a;
-            opt.textContent = !a;
-            input.appendChild(seld);
-            input.appendChild(opt);
-        } else if ("Opacity" === curtes){
-            input = document.createElement("input");
-            input.type = "range";
-            input.min = 0.0;
-            input.max = 1.0;
-            input.step = 0.1;
-            input.value = (a === null || a === undefined) ? 1 : a;
-            input.title = "Opacity: 1.0";
-
-            input.addEventListener("change", function(){
-                if (this.value > 1.0) this.value = 1.0;
-                else if (this.value < 0.0) this.value = 0.0;
-                this.title = "Opacity: " + this.value;
-            });
-        } else if ("Style" === curtes){
-            input = document.createElement("select");
-            var vals = [ "solid"
-                       , "dotted"
-                       , "dashed"
-                       , "double"
-                       , "groove"
-                       , "ridge"
-                       , "inset"
-                       , "outset"
-                       ]
-            input.style.borderStyle = a;
-            for (var i = 0; i < vals.length; i++){
-                var e = document.createElement("option");
-                e.textContent = vals[i];
-                e.value = vals[i];
-                if (vals[i] === a) e.selected = true;
-                input.appendChild(e);
-            }
-            input.addEventListener("change", function(){
-                this.style.borderStyle = getSelectedValue(this);
-            });
-        } else if ("ImageRepeat" === curtes){
-            input = document.createElement("select");
-            var vals = ["repeat", "repeat-x", "repeat-y", "no-repeat"];
-            for (var i = 0; i < vals.length; i++){
-                var e = document.createElement("option");
-                e.textContent = vals[i];
-                e.value = vals[i];
-                if (vals[i] === a) e.selected = true;
-                input.appendChild(e);
-            }
-        } else if ("ImageAttachment" === curtes){
-            input = document.createElement("select");
-            var vals = ["scroll", "fixed"];
-            for (var i = 0; i < vals.length; i++){
-                var e = document.createElement("option");
-                e.textContent = vals[i];
-                e.value = vals[i];
-                if (vals[i] === a) e.selected = true;
-                input.appendChild(e);
-            }
-        } else if ("Font" === curtes){
-            input = document.createElement("select");
-            var vals = [ "arial"
-                       , "helvetica"
-                       , "times new roman"
-                       , "courier"
-                       , "verdana"
-                       , "tahoma"
-                       , "comic sans ms"
-                       , "impact"
-                       , "georgia"
-                       , "palatino"
-                       ]
-            for (var i = 0; i < vals.length; i++){
-                var e = document.createElement("option");
-                e.textContent = vals[i];
-                e.value = vals[i];
-                e.style.fontFamily = vals[i];
-                if (vals[i] === a) e.selected = true;
-                input.appendChild(e);
-            }
-        } else if ("Key" === curtes){
-            input = document.createElement("span");
-            var inp = document.createElement("input");
-
-            inp.type = "password";
-            inp.style.cursor = "pointer";
-            inp.value = maybe("", id, toMaybe(a));
-
-            inp.addEventListener("mouseover", function(){
-                this.type = "text";
-            });
-            inp.addEventListener("mouseout", function(){
-                this.type = "password";
-            });
-            var save = document.createElement("input");
-            save.type = "button";
-            save.value = "save";
-
-            save.addEventListener("click", function(){
-                var str = Browser.Memory.Get("coup5key", "{}");
-                var obj;
-                try {
-                    obj = JSON.parse(str);
-                } catch(e){
-                    obj = {};
-                }
-                obj[Coup.Username()] = this.previousSibling.value;
-                Browser.Memory.Set("coup5key", JSON.stringify(obj));
-            });
-
-            input.appendChild(inp);
-            input.appendChild(save);
-        } else if ("Register" === curtes){
-            input = document.createElement("span");
-            var register = document.createElement("input");
-            var regtype = document.createElement("select");
-            var regnew = document.createElement("option");
-            var regfetch = document.createElement("option");
-            var msg = mkWarning();
-
-            register.type = "button";
-            register.value = "register";
-            regnew.textContent = "new user";
-            regfetch.textContent = "fetch key";
-            msg.id = "Coup5RegisterHint";
-
-            register.addEventListener("mouseover", function(){
-                warn(msg, 1, [ "Warning: This will change your user"
-                             , "homepage link. Make sure to copy it if"
-                             , "it's an important link."
-                             ].join(' '));
-            });
-            register.addEventListener("mouseout", function(){
-                msg.textContent = "";
-            });
-            register.addEventListener("click", function(){
-                var newuser = false;
-                if (regtype.children[0].selected) newuser = true;
-                var f = function(o){
-                    try {
-                        o = JSON.parse(o);
-                    } catch(e){
-                        o = {};
-                        Console.Log("Register: " + e);
-                    }
-                    if (o.Status == 1){
-                        var valo = JSON.stringify({ "String": o.ValidationString
-                                                  , "Time": getPOSIXTime() + 10
-                                                  });
-                        Browser.Memory.Set("Coup5ValidationString", valo);
-                    } else warn(msg, 2, "Server error: " + o.Reason);
-                    warn(msg, 1, [ "Setting validation string and getting"
-                                 , "MemberId..."
-                                 ].join(' '));
-                    setValidationString();
-                    getMemberId();
-
-                    var idchecker = setInterval(function(){
-                        var mid = Coup.MemberId();
-                        maybe(null, function(id){
-                            clearInterval(idchecker);
-                            warn(msg, 1, [ "MemberId received"
-                                         , "(" + id + "),"
-                                         , "attempting to register..."
-                                         ].join(' '));
-                            var obj;
-                            if (newuser) obj = new Register(id);
-                            else obj = new FetchKey(id);
-                            SendPost(obj, storeKey);
-                            var e = document.getElementById(
-                                "Coup5MemberIdFrame"
-                            );
-                            e.parentNode.removeChild(e);
-                            Browser.Memory.Delete("Coup5MemberId");
-                        }, mid);
-                    }, 108); // moro!!
-                    var vschecker = setInterval(function(){
-                        var uvs = Browser.Memory.Get( "Coup5ValidationBool"
-                                                    , "{}"
-                                                    );
-                        maybe(null, function(evs){
-                            either(function(s){
-                                clearInterval(vschecker);
-                                warn(msg, 2, s);
-                            }, function(s){
-                                clearInterval(vschecker);
-                                warn(msg, 1, s);
-                            }, evs);
-                        }, maybeParse(uvs));
-                    }, 108);
-                    setTimeout(function(){
-                        clearInterval(idchecker);
-                        clearInterval(vschecker);
-                        var e = document.getElementById("Coup5ValidationFrame");
-                        e.parentNode.removeChild(e);
-                        if (!Browser.Memory.Get("Coup5ValidationBool", false)){
-                            warn(msg, 2, "Automatic registeration timed out.");
-                            //manualRegistration();
-                        }
-                        Browser.Memory.Delete("Coup5ValidationString");
-                        Browser.Memory.Delete("Coup5ValidationBool");
-                    }, 20000);
-                }
-                var mid = Coup.MemberId();
-                var obj;
-                var bool = maybe(true, function(id){
-                    Console.Log("FetchKey: " + id);
-                    if (newuser) obj = new Register(id);
-                    else obj = new FetchKey(id);
-                    SendPost(obj, storeKey);
-
-                    return false;
-                }, mid);
-                if (bool){
-                    Console.Log("FetchKey: " + Coup.Username());
-                    if (newuser) obj = new Register(Coup.Username());
-                    else obj = new FetchKey(Coup.Username());
-                    warn(msg, 1, "Requesting validation string...");
-                    SendPost(obj, f);
-                }
-            });
-
-            regtype.appendChild(regnew);
-            regtype.appendChild(regfetch);
-            input.appendChild(regtype);
-            input.appendChild(register);
-            input.appendChild(msg);
-        } else if ([ "Color"
-                   , "BackgroundColor"
-                   , "GradientLeft"
-                   , "GradientRight"
-                   ].indexOf(curtes) != -1){
-            input = document.createElement("input");
-            input.value = a;
-            input.style.backgroundColor = '#' + a;
-            input.addEventListener("change", function(){
-                this.style.backgroundColor = '#' + a;
-            });
-        } else if ("ImagePosition" === curtes){
-            input = document.createElement("input");
-            input.value = a;
-        } else {
-            input = document.createElement("td");
-            title.colspan = "2";
-            wrap.className = "Coup5Divider";
-
-            var toggleSiblings = function(e){
-                if (e.nextSibling != null
-                    && e.nextSibling.className != "Coup5Divider"
-                    && e.nextSibling.style.display != "none"){
-                    e.nextSibling.style.display = "none";
-                    toggleSiblings(e.nextSibling);
-                    e.getElementsByTagName("td")[0].style.fontWeight = "bold";
-                } else if (e.nextSibling != null
-                           && e.nextSibling.className != "Coup5Divider"){
-                    e.nextSibling.style.display = "";
-                    toggleSiblings(e.nextSibling);
-                    e.getElementsByTagName("td")[0].style.fontWeight = "";
-                }
-            }
-
-            wrap.addEventListener("click", function(){
-                toggleSiblings(this);
-            });
-        }
-
-        if (ts[0] === "Post" && ts[1] === "Font"){
-            var bgswrap = document.createElement("tr");
-            var td1 = document.createElement("td");
-            var td2 = document.createElement("td");
-            var bgsadd = document.createElement("input");
-
-            bgsadd.type = "button";
-            bgsadd.value = "add layer";
-            bgsadd.addEventListener("click", function(){
-                var i = 0;
-                var exists = true;
-                while (exists){
-                    var e = document.getElementsByClassName(i);
-                    if (e === null) exists = false;
-                    else i++;
-                }
-                var bgtitle = document.createElement("tr");
-                var bgtitletitle = document.createElement("td");
-                var bgtitletd2 = document.createElement("td");
-                bgtitletitle.textContent = "Post Background " + i;
-                bgtitle.appendChild(bgtitletitle);
-                bgtitle.appendChild(bgtitletd2);
-
-                //var obj = tree.Data.Post.Backgrounds[0];
-
-                //recurse(["Post", "Background", '' + i], obj);
-            });
-
-            td1.appendChild(bgsadd);
-            bgswrap.appendChild(td1);
-            bgswrap.appendChild(td2);
-            ui.appendChild(bgswrap);
-        }
-
-        var diff = listDiff(init(ts), statets);
-        if (diff.length > 0){
-            wrap.className = "Coup5Divider";
-
-            var toggleSiblings = function(e){
-                if (e.nextSibling != null
-                    && e.nextSibling.className != "Coup5Divider"
-                    && e.nextSibling.style.display != "none"){
-                    e.nextSibling.style.display = "none";
-                    toggleSiblings(e.nextSibling);
-                    e.getElementsByTagName("td")[0].style.fontWeight = "bold";
-                } else if (e.nextSibling != null
-                           && e.nextSibling.className != "Coup5Divider"){
-                    e.nextSibling.style.display = "";
-                    toggleSiblings(e.nextSibling);
-                    e.getElementsByTagName("td")[0].style.fontWeight = "";
-                }
-            }
-            title.addEventListener("click", function(){
-                //toggleSiblings(this.parentNode);
-            });
-        }
-        statets = init(ts);
-
-        title.textContent = ts.join(' ');
-        input.className = curtes;
-
-        if (["Titlebar", "Post", "Backgrounds", ""].indexOf(curtes) == -1){
-            if (input.tagName === "SELECT")
-                input.addEventListener("dblclick", function(){
-                    var custom = document.createElement("input");
-                    var select = document.createElement("select");
-                    custom.focus();
-                    custom.addEventListener("blur", function(){
-                        var option = document.createElement("option");
-                        option.value = this.value;
-                        option.textContent = this.value;
-                        select.appendChild(option);
-                        this.parentNode.appendChild(select);
-                        this.parentNode.removeChild(this);
-                    });
-                    this.parentNode.appendChild(custom);
-                    this.parentNode.removeChild(this);
-                });
-            inputd.appendChild(input);
-            wrap.appendChild(title);
-            wrap.appendChild(inputd);
-            ui.appendChild(wrap);
-        }
-    }
 
     var trheader = document.createElement("tr");
     var td1 = document.createElement("td");
@@ -1523,7 +1219,7 @@ function mkStyler(tree){
     trheader.appendChild(td2);
     ui.appendChild(trheader);
 
-    traverse([], recurse, tree);
+    traverse([], function(x, y){ mkInputs(ui, x, y); }, tree);
 
     ui.style.width = "100%";
     ui.style.borderSpacing = "0";
@@ -1556,17 +1252,22 @@ function mkSavedStyle(s){
         var styleName = this.parentNode.children[1].textContent;
         currentStyle = new Right(styleName);
         var o = Coup.Styles.Get(styleName);
+        o = merge(o, emptyStyles);
+        maybe(null, function(key){
+            o = merge({ Key: key }, o);
+        }, Coup.Key());
+        o = merge(o, { Register: null });
         delete o.Username;
         delete o.StyleName;
+        delete o.Id;
+        o = co(emptyBackgrounds, fillBackgrounds)(o);
         var s = mkStyler(o);
         s.id = "Coup5Styler";
         var e = document.getElementById("Coup5Styler");
-        Console.Log("Rape.");
         var p = e.parentNode;
-        Console.Log("Tentacle.");
         p.removeChild(e);
         p.insertBefore(s, p.children[0]);
-        triggerHTMLEvent("change"
+        triggerHTMLEvent( "change"
                         , document.getElementById("Coup5Publish")
                         );
     });
@@ -1612,6 +1313,400 @@ function mkSavedStyle(s){
     wrap.appendChild(del);
 
     return wrap;
+}
+
+var statets = [];
+
+// mkInputs :: DOMObj -> [String] -> String -> DOMObj
+function mkInputs(ui, ts, a){
+    if (a === undefined) a = null;
+    var curtes;
+    if (ts.length > 0) curtes = ts[ts.length - 1];
+    else curtes = "";
+    var wrap = document.createElement("tr");
+    var title = document.createElement("td");
+    var inputd = document.createElement("td");
+    var input;
+    if (["Text", "Image"].indexOf(curtes) != -1 && ts[0] != "Quote"){
+        input = document.createElement("input");
+        input.value = a;
+    } else if (["Show", "RemoveBars"].indexOf(curtes) != -1){
+        input = document.createElement("select");
+        seld = document.createElement("option");
+        seld.value = a;
+        seld.textContent = a;
+        opt = document.createElement("option");
+        opt.value = !a;
+        opt.textContent = !a;
+        input.appendChild(seld);
+        input.appendChild(opt);
+    } else if ("Opacity" === curtes){
+        input = document.createElement("input");
+        input.type = "range";
+        input.min = 0.0;
+        input.max = 1.0;
+        input.step = 0.1;
+        input.value = (a === null) ? 1 : a;
+        input.title = "Opacity: 1.0";
+
+        input.addEventListener("change", function(){
+            if (this.value > 1.0) this.value = 1.0;
+            else if (this.value < 0.0) this.value = 0.0;
+            this.title = "Opacity: " + this.value;
+        });
+    } else if ("Style" === curtes){
+        input = document.createElement("select");
+        var vals = [ "solid"
+                   , "dotted"
+                   , "dashed"
+                   , "double"
+                   , "groove"
+                   , "ridge"
+                   , "inset"
+                   , "outset"
+                   ]
+        input.style.borderStyle = a;
+        for (var i = 0; i < vals.length; i++){
+            var e = document.createElement("option");
+            e.textContent = vals[i];
+            e.value = vals[i];
+            if (vals[i] === a) e.selected = true;
+            input.appendChild(e);
+        }
+        input.addEventListener("change", function(){
+            this.style.borderStyle = getSelectedValue(this);
+        });
+    } else if ("ImageRepeat" === curtes){
+        input = document.createElement("select");
+        var vals = ["repeat", "repeat-x", "repeat-y", "no-repeat"];
+        for (var i = 0; i < vals.length; i++){
+            var e = document.createElement("option");
+            e.textContent = vals[i];
+            e.value = vals[i];
+            if (vals[i] === a) e.selected = true;
+            input.appendChild(e);
+        }
+    } else if ("ImageAttachment" === curtes){
+        input = document.createElement("select");
+        var vals = ["scroll", "fixed"];
+        for (var i = 0; i < vals.length; i++){
+            var e = document.createElement("option");
+            e.textContent = vals[i];
+            e.value = vals[i];
+            if (vals[i] === a) e.selected = true;
+            input.appendChild(e);
+        }
+    } else if ("Font" === curtes){
+        input = document.createElement("select");
+        var vals = [ "arial"
+                   , "helvetica"
+                   , "times new roman"
+                   , "courier"
+                   , "verdana"
+                   , "tahoma"
+                   , "comic sans ms"
+                   , "impact"
+                   , "georgia"
+                   , "palatino"
+                   ]
+        for (var i = 0; i < vals.length; i++){
+            var e = document.createElement("option");
+            e.textContent = vals[i];
+            e.value = vals[i];
+            e.style.fontFamily = vals[i];
+            if (vals[i] === a) e.selected = true;
+            input.appendChild(e);
+        }
+    } else if ("Key" === curtes){
+        input = document.createElement("span");
+        var inp = document.createElement("input");
+
+        inp.type = "password";
+        inp.style.cursor = "pointer";
+        inp.value = maybe("", id, toMaybe(a));
+
+        inp.addEventListener("mouseover", function(){
+            this.type = "text";
+        });
+        inp.addEventListener("mouseout", function(){
+            this.type = "password";
+        });
+        var save = document.createElement("input");
+        save.type = "button";
+        save.value = "save";
+
+        save.addEventListener("click", function(){
+            var str = Browser.Memory.Get("coup5key", "{}");
+            var obj;
+            try {
+                obj = JSON.parse(str);
+            } catch(e){
+                obj = {};
+            }
+            obj[Coup.Username()] = this.previousSibling.value;
+            Browser.Memory.Set("coup5key", JSON.stringify(obj));
+        });
+
+        input.appendChild(inp);
+        input.appendChild(save);
+    } else if ("Register" === curtes){
+        input = document.createElement("span");
+        var register = document.createElement("input");
+        var regtype = document.createElement("select");
+        var regnew = document.createElement("option");
+        var regfetch = document.createElement("option");
+        var msg = mkWarning();
+
+        register.type = "button";
+        register.value = "register";
+        regnew.textContent = "new user";
+        regfetch.textContent = "fetch key";
+        msg.id = "Coup5RegisterHint";
+
+        register.addEventListener("mouseover", function(){
+            warn(msg, 1, [ "Warning: This will change your user"
+                         , "homepage link. Make sure to copy it if"
+                         , "it's an important link."
+                         ].join(' '));
+        });
+        register.addEventListener("mouseout", function(){
+            msg.textContent = "";
+        });
+        register.addEventListener("click", function(){
+            document.body.appendChild(mkRegister());
+            return null;
+            var newuser = false;
+            if (regtype.children[0].selected) newuser = true;
+            var f = function(o){
+                try {
+                    o = JSON.parse(o);
+                } catch(e){
+                    o = {};
+                    Console.Log("Register: " + e);
+                }
+                if (o.Status == 1){
+                    var valo = JSON.stringify({ "String": o.ValidationString
+                                              , "Time": getPOSIXTime() + 10
+                                              });
+                    Browser.Memory.Set("Coup5ValidationString", valo);
+                } else warn(msg, 2, "Server error: " + o.Reason);
+                warn(msg, 1, [ "Setting validation string and getting"
+                             , "MemberId..."
+                             ].join(' '));
+                setValidationString();
+                getMemberId();
+
+                var idchecker = setInterval(function(){
+                    var mid = Coup.MemberId();
+                    maybe(null, function(id){
+                        clearInterval(idchecker);
+                        warn(msg, 1, [ "MemberId received"
+                                     , "(" + id + "),"
+                                     , "attempting to register..."
+                                     ].join(' '));
+                        var obj;
+                        if (newuser) obj = new Register(id);
+                        else obj = new FetchKey(id);
+                        SendPost(obj, storeKey);
+                        var e = document.getElementById(
+                            "Coup5MemberIdFrame"
+                        );
+                        e.parentNode.removeChild(e);
+                        Browser.Memory.Delete("Coup5MemberId");
+                    }, mid);
+                }, 108); // moro!!
+                var vschecker = setInterval(function(){
+                    var uvs = Browser.Memory.Get( "Coup5ValidationBool"
+                                                , "{}"
+                                                );
+                    maybe(null, function(evs){
+                        either(function(s){
+                            clearInterval(vschecker);
+                            warn(msg, 2, s);
+                        }, function(s){
+                            clearInterval(vschecker);
+                            warn(msg, 1, s);
+                        }, evs);
+                    }, maybeParse(uvs));
+                }, 108);
+                setTimeout(function(){
+                    clearInterval(idchecker);
+                    clearInterval(vschecker);
+                    var e = document.getElementById("Coup5ValidationFrame");
+                    e.parentNode.removeChild(e);
+                    if (!Browser.Memory.Get("Coup5ValidationBool", false)){
+                        warn(msg, 2, "Automatic registeration timed out.");
+                        document.body.appendChild(mkRegister());
+                    }
+                    Browser.Memory.Delete("Coup5ValidationString");
+                    Browser.Memory.Delete("Coup5ValidationBool");
+                }, 20000);
+            }
+            var mid = Coup.MemberId();
+            var obj;
+            var bool = maybe(true, function(id){
+                Console.Log("FetchKey: " + id);
+                if (newuser) obj = new Register(id);
+                else obj = new FetchKey(id);
+                SendPost(obj, storeKey);
+
+                return false;
+            }, mid);
+            if (bool){
+                Console.Log("FetchKey: " + Coup.Username());
+                if (newuser) obj = new Register(Coup.Username());
+                else obj = new FetchKey(Coup.Username());
+                warn(msg, 1, "Requesting validation string...");
+                SendPost(obj, f);
+            }
+        });
+
+        regtype.appendChild(regnew);
+        regtype.appendChild(regfetch);
+        input.appendChild(regtype);
+        input.appendChild(register);
+        input.appendChild(msg);
+    } else if ([ "Color"
+               , "BackgroundColor"
+               , "GradientLeft"
+               , "GradientRight"
+               ].indexOf(curtes) != -1){
+        input = document.createElement("input");
+        input.value = a;
+        input.style.backgroundColor = '#' + a;
+        input.addEventListener("change", function(){
+            this.style.backgroundColor = '#' + a;
+        });
+    } else if ("ImagePosition" === curtes){
+        input = document.createElement("input");
+        input.value = a;
+    } else {
+        input = document.createElement("td");
+        title.colspan = "2";
+        wrap.className = "Coup5Divider";
+
+        var toggleSiblings = function(e){
+            if (e.nextSibling != null
+                && e.nextSibling.className != "Coup5Divider"
+                && e.nextSibling.style.display != "none"){
+                e.nextSibling.style.display = "none";
+                toggleSiblings(e.nextSibling);
+                e.getElementsByTagName("td")[0].style.fontWeight = "bold";
+            } else if (e.nextSibling != null
+                       && e.nextSibling.className != "Coup5Divider"){
+                e.nextSibling.style.display = "";
+                toggleSiblings(e.nextSibling);
+                e.getElementsByTagName("td")[0].style.fontWeight = "";
+            }
+        }
+
+        wrap.addEventListener("click", function(){
+            toggleSiblings(this);
+        });
+    }
+
+    if (ts[0] === "Post" && ts[1] === "Font"){
+        var bgswrap = document.createElement("tr");
+        var td1 = document.createElement("td");
+        var td2 = document.createElement("td");
+        var bgsadd = document.createElement("input");
+        var bgsrem = document.createElement("input");
+
+        bgsadd.type = "button";
+        bgsadd.value = "add layer";
+        bgsrem.type = "button";
+        bgsrem.value = "remove layer";
+
+        bgsadd.addEventListener("click", function(){
+            var e = this.parentNode.parentNode;
+            var wui = document.createElement("div");
+            var n = document.getElementsByClassName("ImagePosition").length;
+            var tree = { Post: { Backgrounds: {} } };
+            tree.Post.Backgrounds[n] = {
+                  "Color": null
+                , "GradientLeft": null
+                , "GradientRight": null
+                , "Image": null
+                , "Opacity": 1.0
+                , "ImageRepeat": "repeat"
+                , "ImageAttachment": "scroll"
+                , "ImagePosition": "top left"
+                }
+
+            traverse([], function(x, y){ mkInputs(wui, x, y); }, tree);
+
+            while (wui.children.length > 0)
+                e.parentNode.insertBefore(wui.children[0], e);
+        });
+        bgsrem.addEventListener("click", function(){
+            var b = true;
+            var e = this.parentNode.parentNode.previousSibling;
+            while (b){
+                var el = e.previousSibling;
+                if (e.className === "Coup5Divider") b = false;
+                e.parentNode.removeChild(e);
+                e = el;
+            }
+
+            statets = [];
+        });
+
+        td1.appendChild(bgsadd);
+        td1.appendChild(bgsrem);
+        bgswrap.appendChild(td1);
+        bgswrap.appendChild(td2);
+        ui.appendChild(bgswrap);
+    }
+
+    var diff = listDiff(init(ts), statets);
+    if (diff.length > 0){
+        wrap.className = "Coup5Divider";
+
+        var toggleSiblings = function(e){
+            if (e.nextSibling != null
+                && e.nextSibling.className != "Coup5Divider"
+                && e.nextSibling.style.display != "none"){
+                e.nextSibling.style.display = "none";
+                toggleSiblings(e.nextSibling);
+                e.getElementsByTagName("td")[0].style.fontWeight = "bold";
+            } else if (e.nextSibling != null
+                       && e.nextSibling.className != "Coup5Divider"){
+                e.nextSibling.style.display = "";
+                toggleSiblings(e.nextSibling);
+                e.getElementsByTagName("td")[0].style.fontWeight = "";
+            }
+        }
+        title.addEventListener("click", function(){
+            //toggleSiblings(this.parentNode);
+        });
+    }
+    statets = init(ts);
+
+    title.textContent = ts.join(' ');
+    input.className = curtes;
+
+    if (["Titlebar", "Post", "Backgrounds", ""].indexOf(curtes) == -1){
+        if (input.tagName === "SELECT")
+            input.addEventListener("dblclick", function(){
+                var custom = document.createElement("input");
+                var select = document.createElement("select");
+                custom.focus();
+                custom.addEventListener("blur", function(){
+                    var option = document.createElement("option");
+                    option.value = this.value;
+                    option.textContent = this.value;
+                    select.appendChild(option);
+                    this.parentNode.appendChild(select);
+                    this.parentNode.removeChild(this);
+                });
+                this.parentNode.appendChild(custom);
+                this.parentNode.removeChild(this);
+            });
+        inputd.appendChild(input);
+        wrap.appendChild(title);
+        wrap.appendChild(inputd);
+        ui.appendChild(wrap);
+    }
 }
 
 // makeGetStyles :: [String] -> [User]
@@ -2033,7 +2128,7 @@ function mkFloater(id){
     wrap.style.height = "0px"
     wrap.style.width = "400px";
     wrap.style.margin = "auto";
-    if (id != undefined) wrap.id = id;
+    if (id !== undefined) wrap.id = id;
 
     var content = document.createElement("div");
     content.style.marginTop = "10%";
@@ -2115,6 +2210,109 @@ function mkReport(username){
     wrap.appendChild(warning);
 
     return wrap;
+}
+
+// mkRegister :: IO ()
+function mkRegister(){
+    var e = mkFloater("Coup5Floater");
+    var cw = e.children[0].children[1];
+    var title = document.createElement("div");
+    var input = document.createElement("input");
+    var select = document.createElement("select");
+    var newUser = document.createElement("option");
+    var fetchKey = document.createElement("option");
+    var submit = document.createElement("input");
+    var warning = mkWarning();
+
+    var sotime = Browser.Memory.Get("Coup5ManualRegistration", "0");
+    var otime = parseInt(sotime);
+    var time = getPOSIXTime();
+
+    title.className = "Coup5FloaterTitle";
+    title.textContent = "Register";
+    input.placeholder = "MemberID";
+    if (time > otime) input.placeholder = "";
+    newUser.textContent = "new user";
+    newUser.value = 0;
+    fetchKey.textContent = "fetch key";
+    fetchKey.value = 1;
+    submit.type = "submit";
+    submit.value = "register";
+    warning.style.width = "300px";
+
+    submit.addEventListener("click", function(){
+        var m = getSelectedValue(select);
+        var obj;
+        var sotime = Browser.Memory.Get("Coup5ManualRegistration", "0");
+        var otime = parseInt(sotime);
+        var time = getPOSIXTime();
+        if (time > otime){
+            if (m === 0) obj = new Register(Coup.Username());
+            else obj = new FetchKey(Coup.Username());
+
+            SendPost(obj, function(s){
+                Console.Log(s);
+                var b = maybe(false, function(o){
+                    if (o.Status === 1){
+                        warn( warning, 0
+                            , "Success! Now copy your validation string and " +
+                              "save it as your user homepage URL, then find " +
+                              "your MemberID (last digits of the URL in your " +
+                              "username in a post) and put it in the input " +
+                              "where the validation string appeared then " +
+                              "click 'register' again."
+                            );
+                        input.value = "http://" + o.ValidationString + ".com/";
+                        Browser.Memory.Set( "Coup5ManualRegistration"
+                                          , JSON.stringify(getPOSIXTime() + 600)
+                                          );
+                    } else warn(warning, 2, o.Reason);
+                    return true;
+                }, maybeParse(s));
+
+                if (!b){
+                    warn(warning, 2, "Invalid response from server.");
+                }
+                else input.placeholder = "MemberID";
+            });
+        } else {
+            var n = input.value;
+            if (!isNaN(n)){
+                if (m === 0) obj = new Register(n);
+                else obj = new FetchKey(n);
+                SendPost(obj, function(s){
+                    var b = maybe(false, function(o){
+                        if (o.Status === 1){
+                            if ("Key" in o){
+                                var sko = Browser.Memory.Get("coup5key", "{}");
+                                var ko = {};
+                                maybe(null, function(o){
+                                    ko = o;
+                                }, maybeParse(sko));
+                                ko[Coup.Username()] = o.Key;
+                                Browser.Memory.Set( "coup5key"
+                                                  , JSON.stringify(ko)
+                                                  );
+                                warn(warning, 0, "Your key has been stored.");
+                            } else warn(warning, 2, "No key found.");
+                        } else warn(warning, 2, o.Reason);
+                    }, maybeParse(s));
+
+                    if (!b) warn(warning, 2, "Invalid response from server.");
+                });
+            } else warn(warning, 2, "Not a MemberID.");
+        }
+    });
+
+    e.children[0].insertBefore(title, e.children[0].children[0]);
+    cw.appendChild(input);
+    select.appendChild(newUser);
+    select.appendChild(fetchKey);
+    cw.appendChild(select);
+    cw.appendChild(submit);
+    cw.appendChild(warning);
+
+    return e;
 }
 
 // mkWarning :: IO DOMObj
@@ -2471,7 +2669,7 @@ function mkSettings(){
                           , Color: ostyle.QuoteBorderColor
                           }
                 }
-                Console.Log(o);
+                o = emptyBackgrounds(o);
                 Coup.Styles.Add(o, uname);
             }
         }
@@ -2850,10 +3048,9 @@ function storeKey(s){
                               );
             for (var i = 0; i < keys.length; i++)
                 keys[i].getElementsByTagName("input")[0].value = o.Key;
-            msg.textContent = [ "Successful"
-                              , "registration."
-                              ].join(' ');
-            msg.style.color = "#66aa11";
+            warn(msg, 0, [ "Successful"
+                         , "registration."
+                         ].join(' '));
         } catch(e){
             Console.Log("storeKey: " + e);
         }
@@ -2901,7 +3098,7 @@ function gatherStyles(id){
             default: val = undefined;
         }
         Console.Log( keys.join(' ') + ": " + (i + 1) +  " of " + trs.length
-                     + " with " + val
+                     + " with " + JSON.stringify(val)
                    );
         var f = function(ks, ob){
             if (ks.length > 1){
