@@ -2391,7 +2391,7 @@ function mkPublish(){
 
                 var f = function(){
                     if (input.value !== ""){
-                        var o = gatherStyles("Coup5UI");
+                        var o = gatherStyles(document.getElementById("Coup5UI"));
                         o.StyleName = input.value;
                         Coup.Styles.Add(o);
                         e.parentNode.removeChild(e);
@@ -2483,10 +2483,8 @@ function mkPublish(){
                        }, []
             );
 
-            // XXX:
-            // >GatherStyles
-            // >here
-            stylePost(gatherStyles("Coup5UI"), post.children[0]);
+            stylePost(gatherStyles(styler), post.children[0]);
+
             post.style.marginBottom = "5px";
             post.id = "Coup5StylePreview";
 
@@ -2500,7 +2498,8 @@ function mkPublish(){
                 var post = mkPost(Coup.Username(""));
                 post.id = "Coup5StylePreview";
                 Console.Log("Restyling preview...");
-                stylePost(gatherStyles("Coup5UI"), post.children[0]);
+                stylePost( gatherStyles(document.getElementById("Coup5UI"))
+                         , post.children[0]);
                 Console.Log("Adding preview...");
                 p.appendChild(post);
             });
@@ -2528,6 +2527,7 @@ function mkPublish(){
     either(function(x){
         SendPost( new GetStyles(false, [ new User(Coup.Username(), 0)  ])
                 , function(s){
+                    delete s.Id;
                     eitherStyles = new Right(s);
                     f(s);
                   }
@@ -2819,20 +2819,14 @@ function mkProfile(hash){
             tab.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
 
         tab.addEventListener("click", function(){
-            Console.Log("Potato.");
             var key = this.textContent;
-            Console.Log("Fork.");
             var coup5ui = document.getElementById("Coup5UI");
-            Console.Log("Banana.");
             for (var i = 0; i < coup5ui.children.length; i++)
                 coup5ui.removeChild(coup5ui.children[i]);
-            Console.Log("Cake.");
             coup5ui.appendChild(tablist[key]());
-            Console.Log("Pancake.");
             for (var i = 0; i < tabs.children.length; i++){
                 tabs.children[i].style.backgroundColor = "";
             }
-            Console.Log("Muffin.");
             this.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
         });
 
@@ -3061,11 +3055,10 @@ function storeKey(s){
 
 // {{{ Publishing
 
-function gatherStyles(id){
+function gatherStyles(e){
     Console.Log("Gathering styles...");
     var o = {};
-    Console.Log(document.getElementById(id));
-    var trs = document.getElementById(id).getElementsByTagName("tr");
+    var trs = e.getElementsByTagName("tr");
     for (var i = 0; i < trs.length; i++){
         var val;
         var inp = trs[i].children[1].children[0];
