@@ -37,9 +37,13 @@
 //              - Make sure this works now.
 //          - Make sure this works now.
 //      - Delete unused data.
+//          - Do this the first time the user uses the script automagically.
 // - Options.
 //      - Global opacity.
+//      - Globally disabled declarations.
 //      - Report input here?
+//      - Export all data?
+//          - Custom!
 // - Input placeholders.
 // - More warnings!
 //      - Where?!
@@ -51,8 +55,7 @@
 
 // FIXME:
 // - Unicode characters not showing up in cache, saved styles or preview.
-//      - ?
-// - Publish page doesn't work if you navigate back to it from another tab.
+//      - I never figured this bug out, but it doesn't seem to happen anymore.
 // - Merge objects properly so all inputs appear.
 //      - See `merge' and function that makes inputs.
 //          - Test this on a new account to make sure.
@@ -2391,15 +2394,44 @@ function mkPublish(){
 
                 var f = function(){
                     if (input.value !== ""){
-                        var o = gatherStyles(document.getElementById("Coup5UI"));
+                        var o = gatherStyles(
+                            document.getElementById("Coup5UI")
+                        );
                         o.StyleName = input.value;
                         Coup.Styles.Add(o);
                         e.parentNode.removeChild(e);
+
+                        var ss = document.getElementsByClassName(
+                            "Coup5StyleHeader"
+                        );
+                        var inserter = function(x){
+                            Console.Log(1);
+                            styles.appendChild(x);
+                        }
+                        var me = Nothing;
+                        for (var i = 0; i < ss.length; i++)
+                            if (input.value === ss[i].textContent)
+                                me = new Just(ss[i]);
+
+                        maybe(null, function(e){
+                            inserter = function(x){
+                                Console.Log(2);
+                                Console.Log(x);
+                                styles.insertBefore(x, e.parentNode);
+                                styles.removeChild(e.parentNode);
+                            }
+                        }, me);
+
+                        var post = mkSavedStyle(o);
+                        Console.Log("Inserting styles.");
+                        inserter(post);
+                        Console.Log("Style inserted.");
                     } else {
                         warn(warning, 2, "Cannot be empty");
                     }
                 }
 
+                // TODO: make sure this works
                 input.addEventListener("keydown", function(e){
                     if (e.keyCode === 13) f();
                 });
