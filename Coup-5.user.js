@@ -14,6 +14,7 @@
 // TODO:
 // - Cache.
 //      - Per style timestamps.
+//          - Make sure this works now.
 //      - Make sure this works now.
 // - Ignore list.
 //      - "Permanent cache".
@@ -37,10 +38,11 @@
 //              - Make sure this works now.
 //          - Make sure this works now.
 //      - Delete unused data.
-//          - Do this the first time the user uses the script automagically.
+//      - Do this the first time the user uses the script automagically.
 // - Options.
 //      - Global opacity.
 //      - Globally disabled declarations.
+//          - Friendly reminder not to be a lazy shithead and implement this.
 //      - Report input here?
 //      - Export all data?
 //          - Custom!
@@ -49,7 +51,10 @@
 //      - Where?!
 // - jsonp.
 // - XHR data encoding/decoding and escaping.
-// - Inject new style DOMObj on style save.
+// - Need more generic functions to strip bloat code.
+//      - Example: wherever mkReport is used.
+// - Needs more documentation.
+//      - At least for top level functions and data.
 
 // XXX:
 
@@ -61,10 +66,20 @@
 //          - Test this on a new account to make sure.
 // - Style importing imports all styles under all usernames.
 //      - Not anymore. I'm too tired to verify this.
+// - Registering not working in Chrome.
+//      - ValidationString not stored somehow.
 
-// Vim:
+// Vim
 // :set expandtab
 // :set foldenable
+
+// Hacking
+// The comments accompanying functions are data types inspired by Haskell. This
+// makes it easier to tell what they're supposed to do without reading the full
+// description/explanation of the function.
+//
+// f :: String -> String -> String
+// A function called `f' which takes two Strings and returns a String.
 
 // {{{ Debugging
 
@@ -106,16 +121,25 @@ function flip(f){
     return function(y, x){ return f(x, y); }
 }
 
+// | Take n amount of elements from a list.
 // take :: String -> Int -> String
 function take(str, n){
     return str.substr(0, n);
 }
 
+// | All elements in a list excluding the last.
 // init :: [a] -> [a]
 function init(xs){
     return xs.slice(0, xs.length - 1);
 }
 
+// | Last element in a list. Unsafe.
+// last :: [a] -> a
+function last(xs){
+    return xs[xs.length - 1];
+}
+
+// | Is the element part of the list?
 // elem :: a -> [a] -> Bool
 function elem(x, xs){
     var b = false;
@@ -272,6 +296,15 @@ function getSelectedValue(o){
 function parseBool(s){
     if (s === "true") return true;
     else return false;
+}
+
+// XXX: Might as well rename this something like xBrowserCss.
+// linearGradient :: DOMObj -> String -> DOMObj
+function linearGradient(o, s){
+    o.style.backgroundImage = "-moz-" + s;
+    o.style.backgroundImage = "-webkit-" + s;
+    o.style.backgroundImage = "-o-" + s;
+    o.style.backgroundImage = s;
 }
 
 // }}}
@@ -664,43 +697,28 @@ var Coup = { Debug: true
                      }
            , Cache: { List: function(){
                         var tmp = Browser.Memory.Get(this.Key, "[]");
-                        try {
-                            return JSON.parse(tmp);
-                        } catch(e){
-                            Console.Log("Coup.Cache.List: " + e);
-                            return [];
-                        }
+                        return maybe([], id, maybeParse(tmp));
                       }
                     , Add: function(style){
+                        style.Timestamp = getPOSIXTime();
                         var list = this.List();
                         var f = function(o){
-                            return (o["Username"] === style.Username);
+                            return (o.Username === style.Username);
                         }
-                        list = JSON.stringify(insert(f, style, list));
-                        Browser.Memory.Set(this.Key, list);
-                        Browser.Memory.Set( this.TimeKey
-                                          , JSON.stringify(getPOSIXTime())
-                                          );
+                        var slist = JSON.stringify(insert(f, style, list));
+                        Browser.Memory.Set(this.Key, slist);
                       }
                     , Clear: function(){
                         Browser.Memory.Set(this.Key, "[]");
                       }
                     , Autoclear: function(){
-                        var stime = Browser.Memory.Get(this.TimeKey, '0');
-                        var time;
                         var newtime = getPOSIXTime();
-                        try {
-                            time = JSON.parse(stime);
-                        } catch(e){
-                            time = 0;
-                        }
-                        Console.Log( "Coup.Cache.Autoclear: Comparing times " +
-                                     newtime + " > " + (time + this.Time)
-                                   );
-                        if (newtime > time + this.Time){
-                            this.Clear();
-                            Console.Log("Coup.Cache.Autoclear: Cache cleared.");
-                        }
+                        var list = this.List();
+                        list = filter(function(o){
+                            return (!(newtime > (o.Timestamp + this.Time)));
+                        }, list);
+                        var slist = JSON.stringify(list);
+                        Browser.Memory.Set(this.Key, slist);
                       }
                     , Names: function(){
                         var list = this.List();
@@ -711,13 +729,10 @@ var Coup = { Debug: true
                       }
                     , Time: 300
                     , Key: "Coup5Cache"
-                    , TimeKey: "Coup5CacheTime"
                     }
            , Styles: { Obj: function(){
                         var tmp = Browser.Memory.Get(this.Key, "{}");
-                        return maybe({}, function(o){
-                            return o;
-                        }, maybeParse(tmp));
+                        return maybe({}, id, maybeParse(tmp));
                        }
                      , List: function(o){
                         var username = Coup.Username("");
@@ -1355,7 +1370,7 @@ function mkInputs(ui, ts, a){
         input.addEventListener("change", function(){
             if (this.value > 1.0) this.value = 1.0;
             else if (this.value < 0.0) this.value = 0.0;
-            this.title = "Opacity: " + this.value;
+            this.title = parseFloat(this.value).toFixed(1);
         });
     } else if ("Style" === curtes){
         input = document.createElement("select");
@@ -1476,8 +1491,6 @@ function mkInputs(ui, ts, a){
             msg.textContent = "";
         });
         register.addEventListener("click", function(){
-            document.body.appendChild(mkRegister());
-            return null;
             var newuser = false;
             if (regtype.children[0].selected) newuser = true;
             var f = function(o){
@@ -1573,12 +1586,12 @@ function mkInputs(ui, ts, a){
                , "BackgroundColor"
                , "GradientLeft"
                , "GradientRight"
-               ].indexOf(curtes) != -1){
+               ].indexOf(curtes) !== -1){
         input = document.createElement("input");
         input.value = a;
         input.style.backgroundColor = '#' + a;
         input.addEventListener("change", function(){
-            this.style.backgroundColor = '#' + a;
+            this.style.backgroundColor = '#' + this.value;
         });
     } else if ("ImagePosition" === curtes){
         input = document.createElement("input");
@@ -1589,9 +1602,10 @@ function mkInputs(ui, ts, a){
         wrap.className = "Coup5Divider";
 
         var toggleSiblings = function(e){
-            if (e.nextSibling != null
-                && e.nextSibling.className != "Coup5Divider"
-                && e.nextSibling.style.display != "none"){
+            if ( e.nextSibling != null
+                 && e.nextSibling.className != "Coup5Divider"
+                 && e.nextSibling.style.display != "none"
+               ){
                 e.nextSibling.style.display = "none";
                 toggleSiblings(e.nextSibling);
                 e.getElementsByTagName("td")[0].style.fontWeight = "bold";
@@ -1819,12 +1833,13 @@ function stylePost(s, o){
                     ", " + to + ")";
             if ("GradientLeft" in s.Titlebar.Background
                 && "GradientRight" in s.Titlebar.Background)
-                titlebar.style.backgroundImage =
-                    "-moz-linear-gradient(left, #" +
-                    s.Titlebar.Background.GradientLeft +
-                    " 0%, #" +
-                    s.Titlebar.Background.GradientRight +
-                    " 100%)";
+                linearGradient( titlebar
+                              , "linear-gradient(left, #" +
+                                s.Titlebar.Background.GradientLeft +
+                                " 0%, #" +
+                                s.Titlebar.Background.GradientRight +
+                                " 100%)"
+                              );
         }
         if ("Border" in s.Titlebar){
             if ("Style" in s.Titlebar.Border)
@@ -1876,12 +1891,13 @@ function stylePost(s, o){
                     e.style.backgroundColor = '#' + s.Post.Backgrounds[i].Color;
                 if ("GradientLeft" in s.Post.Backgrounds[i]
                     && "GradientRight" in s.Post.Backgrounds[i])
-                        e.style.backgroundImage =
-                            "-moz-linear-gradient(left, #" +
-                            s.Post.Backgrounds[i].GradientLeft +
-                            " 0%, #" +
-                            s.Post.Backgrounds[i].GradientRight +
-                            " 100%)";
+                        linearGradient(e
+                            , "linear-gradient(left, #" +
+                              s.Post.Backgrounds[i].GradientLeft +
+                              " 0%, #" +
+                              s.Post.Backgrounds[i].GradientRight +
+                              " 100%)"
+                            );
                 if ("Image" in s.Post.Backgrounds[i])
                     e.style.backgroundImage =
                         "url(" + s.Post.Backgrounds[i].Image + ")";
@@ -2050,7 +2066,9 @@ function mkPost(username){
                         "li", { textContent: " | " }, [],
                         "li", { className: "title", textContent: "Member" }, [],
                         "li", { className: "author_header_links" }, [
-                            "a", { className: "expanded_arrows_collapsed" }, [
+                            "a", { className: "expanded_arrows_collapsed"
+                                 , href: "javascript:;"
+                                 }, [
                                 "img", { width: "21px"
                                        , height: "20px"
                                        , alt: ""
@@ -2431,7 +2449,6 @@ function mkPublish(){
                     }
                 }
 
-                // TODO: make sure this works
                 input.addEventListener("keydown", function(e){
                     if (e.keyCode === 13) f();
                 });
@@ -2578,10 +2595,13 @@ function mkPublish(){
 function mkSettings(){
     Console.Log("mkSettings");
     var form = document.createElement("div");
-
     var convStyles = document.createElement("input");
     var delOld = document.createElement("input");
     var delAll = document.createElement("input");
+    var opawrap = document.createElement("table");
+    var rsubmit = document.createElement("input");
+    var btnwrap = document.createElement("div");
+    var gwrap = document.createElement("table");
 
     convStyles.type = "button";
     convStyles.value = "Convert old saved styles";
@@ -2589,6 +2609,12 @@ function mkSettings(){
     delOld.value = "Delete old saved data";
     delAll.type = "button";
     delAll.value = "Delete all saved data";
+    rsubmit.value = "report user";
+    rsubmit.type = "button";
+    opawrap.style.margin = "10px";
+    btnwrap.style.margin = "10px";
+    gwrap.style.margin = "10px";
+    gwrap.style.cssFloat = "right";
 
     convStyles.addEventListener("click", function(){
         // XXX: We can use recursion here because the names (mostly?) match.
@@ -2706,10 +2732,82 @@ function mkSettings(){
             }
         }
     });
+    rsubmit.addEventListener("click", function(){
+        var e = mkReport("");
+        var f = mkFloater("Coup5Floater");
+        var cw = f.children[0].children[1];
+        var title = document.createElement("div");
 
-    form.appendChild(convStyles);
-    form.appendChild(delOld);
-    form.appendChild(delAll);
+        title.className = "Coup5FloaterTitle";
+        title.textContent = "Report user";
+
+        f.children[0].insertBefore(title, f.children[0].children[0]);
+        cw.appendChild(e);
+        document.body.appendChild(f);
+    });
+
+    var opas = [ "Avatar Opacity"
+               , "Titlebar Username Opacity"
+               , "Titlebar Title Opacity"
+               , "Titlebar Message Opacity"
+               , "Titlebar Group Opacity"
+               , "Titlebar Background Opacity"
+               , "Titlebar More Opacity"
+               , "Post Background Opacity"
+               , "Post Text Opacity"
+               , "Post Link Opacity"
+               , "Quote Opacity"
+               , "Quote Text Opacity"
+               ]
+    for (var i = 0; i < opas.length; i++){
+        var e = document.createElement("tr");
+        var t = document.createElement("td");
+        var u = document.createElement("td");
+        var o = document.createElement("input");
+
+        t.textContent = opas[i];
+        o.type = "range";
+        o.min = 0.0;
+        o.max = 1.0;
+        o.step = 0.1;
+        o.value = 1.0;
+        o.title = 1.0;
+
+        o.addEventListener("change", function(){
+            if (this.value > 1.0) this.value = 1.0;
+            else if (this.value < 0.0) this.value = 0.0;
+            this.title = parseFloat(this.value).toFixed(1);
+        });
+
+        u.appendChild(o);
+        e.appendChild(t);
+        e.appendChild(u);
+        opawrap.appendChild(e);
+    }
+    traverse([], function(ls, a){
+        if (a === null && last(ls) !== "Opacity"){
+            var e = document.createElement("tr");
+            var t = document.createElement("td");
+            var u = document.createElement("td");
+            var o = document.createElement("input");
+
+            t.textContent = ls.join(' ');
+            o.type = "checkbox";
+
+            u.appendChild(o);
+            e.appendChild(t);
+            e.appendChild(u);
+            gwrap.appendChild(e);
+        }
+    }, emptyStyles);
+
+    btnwrap.appendChild(convStyles);
+    btnwrap.appendChild(delOld);
+    btnwrap.appendChild(delAll);
+    btnwrap.appendChild(rsubmit);
+    form.appendChild(gwrap);
+    form.appendChild(opawrap);
+    form.appendChild(btnwrap);
 
     return form;
 }
@@ -2747,7 +2845,7 @@ function mkCache(){
             var title = document.createElement("div");
 
             title.className = "Coup5FloaterTitle";
-            title.textContent = "Report: " + us;
+            title.textContent = "Report user";
 
             f.children[0].insertBefore(title, f.children[0].children[0]);
             cw.appendChild(e);
@@ -2790,8 +2888,7 @@ function mkAbout(){
     Console.Log(gradient);
 
     banner.id = "Coup5AboutBanner";
-    banner.style.backgroundImage =
-        "-moz-linear-gradient(-17deg" + gradient + ")";
+    linearGradient(banner, "linear-gradient(-17deg" + gradient + ")");
     banner.textContent = "Coup d'Bungie";
     version.id = "Coup5AboutText";
     version.innerHTML = "<p>You are using Coup d'Bungie " + Coup.Version +
@@ -2949,7 +3046,7 @@ function insertUI(){
                 var title = document.createElement("div");
 
                 title.className = "Coup5FloaterTitle";
-                title.textContent = "Report: " + us;
+                title.textContent = "Report user";
 
                 f.children[0].insertBefore(title, f.children[0].children[0]);
                 cw.appendChild(e);
@@ -2963,7 +3060,7 @@ function insertUI(){
             sigs[i].appendChild(re);
         }
 
-        // FIXME: >implying vs is defined
+        var vs = Coup.ValidationString();
         if (vs !== ""){
             Console.Log("Trying to get MemberId...");
             var pid = window.location.hash.substr(1);
